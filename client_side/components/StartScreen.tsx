@@ -152,7 +152,16 @@ const StartScreen: React.FC = () => {
           </div>
 
           <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-white uppercase leading-[0.85] drop-shadow-md italic">
-            Four
+            <motion.span
+              animate={{
+                scale: [1, 1.12, 1],
+                rotate: [-2, 3, -2],
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="inline-block origin-center text-[#FACC15] text-stroke-3"
+            >
+              4
+            </motion.span>
             <br />
             <span className="text-[#FACC15] text-stroke-3">In A</span>
             <br />

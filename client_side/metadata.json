@@ -1,5 +1,5 @@
 {
-  "name": "Four in a Row",
+  "name": "4 in a Row",
   "description": "A turn-based two-player game where players drop discs into a grid to connect four in a row. Features dark mode, canvas rendering, and smooth animations.",
   "requestFramePermissions": []
 }

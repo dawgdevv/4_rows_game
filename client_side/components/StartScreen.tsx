@@ -151,14 +151,19 @@ const StartScreen: React.FC = () => {
             <div className="w-2 h-0.5 bg-black rotate-45" />
           </div>
 
-          <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-white uppercase leading-[0.85] drop-shadow-md italic">
+          <h1 className="text-7xl md:text-[11rem] font-black tracking-tighter text-white uppercase leading-[0.85] drop-shadow-md italic">
             <motion.span
               animate={{
-                scale: [1, 1.12, 1],
-                rotate: [-2, 3, -2],
+                scale: [1, 1.2, 0.92, 1.18, 1],
+                rotate: [-6, 8, -4, 6, -6],
+                y: [0, -6, 6, -4, 0],
               }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="inline-block origin-center text-[#FACC15] text-stroke-3"
+              transition={{
+                duration: 2.6,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="inline-block origin-center text-[#FACC15] text-stroke-3 drop-shadow-[0_0_30px_rgba(250,204,21,0.55)]"
             >
               4
             </motion.span>

@@ -9,6 +9,8 @@ import (
 
 func main() {
 	http.HandleFunc("/ws", ws.HandleWS)
-	log.Println("server is running on 8000")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	port := ":8080"
+	log.Printf("server running on %s", port)
+	log.Fatal(http.ListenAndServe(port, nil))
 }

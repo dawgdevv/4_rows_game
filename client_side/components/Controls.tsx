@@ -14,7 +14,7 @@ const Controls: React.FC = () => {
   } = useGameStore();
 
   return (
-    <div className="absolute top-4 left-0 right-0 px-4 md:px-8 z-20 flex justify-between items-start pointer-events-none">
+    <div className="absolute top-3 sm:top-4 left-0 right-0 px-3 sm:px-4 md:px-8 z-20 flex flex-wrap sm:flex-nowrap gap-3 items-center justify-between pointer-events-none">
       {/* Left: Home/Quit Button */}
       <motion.button
         whileHover={{ scale: 1.05, boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)" }}
@@ -24,14 +24,14 @@ const Controls: React.FC = () => {
           translate: "2px 2px",
         }}
         onClick={quitGame}
-        className="pointer-events-auto p-3 bg-white border-3 border-black rounded-lg text-black shadow-neo hover:bg-slate-100 transition-colors"
+        className="pointer-events-auto p-2.5 sm:p-3 bg-white border-3 border-black rounded-lg text-black shadow-neo hover:bg-slate-100 transition-colors"
         title="Quit to Main Menu"
       >
-        <Home size={24} strokeWidth={3} />
+        <Home size={22} className="sm:w-6 sm:h-6" strokeWidth={3} />
       </motion.button>
 
       {/* Center: Turn Indicator */}
-      <div className="flex items-center gap-2 md:gap-4 pointer-events-auto mt-2">
+      <div className="flex items-center gap-2 md:gap-4 pointer-events-auto mt-1 sm:mt-2 order-last sm:order-none flex-1 justify-center min-w-[220px]">
         {/* Player 1 Box */}
         <motion.div
           animate={{
@@ -45,13 +45,13 @@ const Controls: React.FC = () => {
               : "bg-slate-200 text-slate-500"
           }`}
         >
-          <span className="font-black text-xl md:text-2xl tracking-tighter drop-shadow-sm">
+          <span className="font-black text-lg sm:text-xl md:text-2xl tracking-tighter drop-shadow-sm">
             P1
           </span>
         </motion.div>
 
         {/* Animated Arrow */}
-        <div className="w-20 md:w-24 flex justify-center items-center">
+        <div className="w-16 sm:w-20 md:w-24 flex justify-center items-center">
           <motion.div
             animate={{
               rotate: currentPlayer === 1 ? 180 : 0,
@@ -67,7 +67,7 @@ const Controls: React.FC = () => {
             className="filter drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]"
           >
             <ArrowRight
-              size={48}
+              size={40}
               strokeWidth={5}
               className={currentPlayer === 1 ? "text-player1" : "text-player2"}
             />
@@ -87,14 +87,14 @@ const Controls: React.FC = () => {
               : "bg-slate-200 text-slate-500"
           }`}
         >
-          <span className="font-black text-xl md:text-2xl tracking-tighter drop-shadow-sm">
+          <span className="font-black text-lg sm:text-xl md:text-2xl tracking-tighter drop-shadow-sm">
             {gameMode === "cpu" ? "CPU" : "P2"}
           </span>
         </motion.div>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex gap-3 pointer-events-auto">
+      <div className="flex gap-2 sm:gap-3 pointer-events-auto">
         <motion.button
           whileHover={{
             scale: 1.05,
@@ -106,13 +106,13 @@ const Controls: React.FC = () => {
             translate: "2px 2px",
           }}
           onClick={toggleSound}
-          className="p-3 bg-white border-3 border-black rounded-lg text-black shadow-neo hover:bg-slate-100"
+          className="p-2.5 sm:p-3 bg-white border-3 border-black rounded-lg text-black shadow-neo hover:bg-slate-100"
           title={isSoundEnabled ? "Mute" : "Unmute"}
         >
           {isSoundEnabled ? (
-            <Volume2 size={24} strokeWidth={3} />
+            <Volume2 size={22} className="sm:w-6 sm:h-6" strokeWidth={3} />
           ) : (
-            <VolumeX size={24} strokeWidth={3} />
+            <VolumeX size={22} className="sm:w-6 sm:h-6" strokeWidth={3} />
           )}
         </motion.button>
 
@@ -127,10 +127,10 @@ const Controls: React.FC = () => {
             translate: "2px 2px",
           }}
           onClick={resetGame}
-          className="p-3 bg-blue-500 border-3 border-black rounded-lg text-white shadow-neo hover:bg-blue-400"
+          className="p-2.5 sm:p-3 bg-blue-500 border-3 border-black rounded-lg text-white shadow-neo hover:bg-blue-400"
           title="Restart Game"
         >
-          <RefreshCw size={24} strokeWidth={3} />
+          <RefreshCw size={22} className="sm:w-6 sm:h-6" strokeWidth={3} />
         </motion.button>
       </div>
     </div>

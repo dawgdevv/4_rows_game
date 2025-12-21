@@ -278,7 +278,7 @@ const Game: React.FC = () => {
   ]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col">
+    <div className="relative w-full min-h-screen overflow-hidden flex flex-col">
       {/* BACKGROUND LAYER (z-0) */}
       <div className="absolute inset-0 z-0">
         {appScreen === "game" ? (
@@ -353,16 +353,16 @@ const Game: React.FC = () => {
       </div>
 
       {/* CONTENT LAYER (z-20) - Interactive elements */}
-      <div className="relative z-20 w-full h-full flex flex-col pointer-events-none">
+      <div className="relative z-20 w-full flex-1 flex flex-col pointer-events-none overflow-x-hidden overflow-y-auto">
         <AnimatePresence mode="wait">
           {appScreen === "start" && (
-            <div className="pointer-events-auto w-full h-full">
+            <div className="pointer-events-auto w-full min-h-full flex-1">
               <StartScreen key="start" />
             </div>
           )}
 
           {appScreen === "mode_selection" && (
-            <div className="pointer-events-auto w-full h-full">
+            <div className="pointer-events-auto w-full min-h-full flex-1">
               <ModeSelection key="mode" />
             </div>
           )}
@@ -373,13 +373,13 @@ const Game: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, y: 50 }}
-              className="relative w-full h-full flex flex-col pointer-events-auto"
+              className="relative w-full flex-1 flex flex-col pointer-events-auto"
             >
               <Controls />
 
-              {/* Added Padding Top for Breathing Room */}
-              <div className="flex-1 flex items-center justify-center p-4 pt-32 z-10">
-                <div className="relative">
+              {/* Board container with minimal top padding on small screens */}
+              <div className="flex-1 flex items-center justify-center p-2 sm:p-3 md:p-4 pt-14 sm:pt-16 md:pt-20 z-10">
+                <div className="relative w-full max-w-6xl h-full">
                   <BoardCanvas />
                 </div>
               </div>

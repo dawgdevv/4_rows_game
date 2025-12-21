@@ -459,6 +459,7 @@ const BoardCanvas: React.FC = () => {
   const [scale, setScale] = useState(1);
   const stageRef = useRef<Konva.Stage>(null);
   const boardGroupRef = useRef<Konva.Group>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Disable pointer interactions while a disc is mid-air or the game is over to prevent duplicate drops.
   const interactionDisabled = gameStatus !== "playing" || !!activeDrop;
@@ -470,19 +471,54 @@ const BoardCanvas: React.FC = () => {
   };
 
   useEffect(() => {
-    const handleResize = () => {
-      const maxWidth = window.innerWidth * 0.9;
-      const maxHeight = window.innerHeight * 0.75;
+    const resizeToContainer = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const { width, height } = container.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      const safeWidth = Math.max(width - 24, 280);
+      const safeHeight = Math.max(height - 24, 280);
+
+      // Smaller nav allowance to maximize board space
+      const navAllowance = 100;
+      const maxHeight = Math.min(safeHeight, vh - navAllowance);
+      const maxWidth = Math.min(safeWidth, vw - 24);
 
       const scaleX = maxWidth / STAGE_WIDTH;
       const scaleY = maxHeight / STAGE_HEIGHT;
-      const newScale = Math.min(scaleX, scaleY, 1.1);
-      setScale(newScale);
+      const rawScale = Math.min(scaleX, scaleY);
+
+      // Viewport-aware max scale based on height too:
+      // - Short laptops (vh <= 800): cap at 0.55
+      // - Standard laptops (vh <= 900 or vw <= 1440): cap at 0.65
+      // - Larger screens: can go up to 0.9
+      let maxScale = 0.9;
+      if (vh <= 800 || vw <= 1366) {
+        maxScale = 0.55;
+      } else if (vh <= 900 || vw <= 1440) {
+        maxScale = 0.65;
+      } else if (vw <= 1920) {
+        maxScale = 0.8;
+      }
+
+      // Clamp so the board stays legible on phones and doesn't overflow on laptops
+      setScale(Math.max(0.3, Math.min(rawScale, maxScale)));
     };
 
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
+    resizeToContainer();
+
+    const observer = new ResizeObserver(resizeToContainer);
+    if (containerRef.current) observer.observe(containerRef.current);
+
+    window.addEventListener("resize", resizeToContainer);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", resizeToContainer);
+    };
   }, []);
 
   const boardMaskPath = useMemo(() => {
@@ -534,7 +570,10 @@ const BoardCanvas: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-full w-full">
+    <div
+      ref={containerRef}
+      className="flex justify-center items-center w-full h-full min-h-[50vh] max-h-[calc(100vh-80px)] max-w-6xl mx-auto p-2 sm:p-3 md:p-4"
+    >
       <Stage
         width={STAGE_WIDTH * scale}
         height={STAGE_HEIGHT * scale}

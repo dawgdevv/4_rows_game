@@ -29,14 +29,14 @@ const StartScreen: React.FC = () => {
       animate="visible"
       exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
       variants={backgroundVariants}
-      className="flex flex-col items-center justify-center h-full w-full relative z-10 p-4 overflow-hidden"
+      className="flex flex-col items-center justify-center min-h-full w-full relative z-10 p-4 sm:p-6 md:p-8 overflow-y-auto overflow-x-hidden"
     >
       {/* Abstract Background Shapes - Crazy Motion */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         {/* Top Left Yellow Box */}
         <motion.div
           variants={shapeVariants}
-          className="absolute top-10 left-4 md:left-20"
+          className="absolute top-[5%] left-[2%] sm:left-[5%] md:left-[8%]"
         >
           <motion.div
             animate={{
@@ -50,19 +50,19 @@ const StartScreen: React.FC = () => {
               ease: "easeInOut",
               type: "tween",
             }}
-            className="w-24 h-24 md:w-32 md:h-32 bg-[#FACC15] border-4 border-[#312E81] shadow-[8px_8px_0px_0px_rgba(49,46,129,1)]"
+            className="w-[15vw] h-[15vw] min-w-[60px] min-h-[60px] max-w-[120px] max-h-[120px] bg-[#FACC15] border-2 sm:border-4 border-[#312E81] shadow-[4px_4px_0px_0px_rgba(49,46,129,1)] sm:shadow-[8px_8px_0px_0px_rgba(49,46,129,1)]"
           />
         </motion.div>
 
         {/* Bottom Right Pink Circle */}
         <motion.div
           variants={shapeVariants}
-          className="absolute bottom-20 right-4 md:right-20"
+          className="absolute bottom-[10%] right-[2%] sm:right-[5%] md:right-[8%]"
         >
           <motion.div
             animate={{
-              y: [0, -40, 0],
-              x: [0, 20, 0],
+              y: [0, -20, 0],
+              x: [0, 10, 0],
             }}
             transition={{
               duration: 2.5,
@@ -70,16 +70,16 @@ const StartScreen: React.FC = () => {
               ease: "easeInOut",
               type: "tween",
             }}
-            className="w-32 h-32 md:w-48 md:h-48 bg-[#EC4899] rounded-full border-4 border-[#312E81] shadow-[8px_8px_0px_0px_rgba(49,46,129,1)] flex items-center justify-center"
+            className="w-[20vw] h-[20vw] min-w-[80px] min-h-[80px] max-w-[160px] max-h-[160px] bg-[#EC4899] rounded-full border-2 sm:border-4 border-[#312E81] shadow-[4px_4px_0px_0px_rgba(49,46,129,1)] sm:shadow-[8px_8px_0px_0px_rgba(49,46,129,1)] flex items-center justify-center"
           >
-            <div className="w-16 h-16 bg-black rounded-full animate-ping opacity-20" />
+            <div className="w-[30%] h-[30%] bg-black rounded-full animate-ping opacity-20" />
           </motion.div>
         </motion.div>
 
         {/* Top Right Striped Rect */}
         <motion.div
           variants={shapeVariants}
-          className="absolute top-20 right-4 md:right-32"
+          className="absolute top-[8%] right-[2%] sm:right-[10%] md:right-[15%]"
         >
           <motion.div
             animate={{ rotate: [6, 24, 6] }}
@@ -89,11 +89,11 @@ const StartScreen: React.FC = () => {
               repeatType: "mirror",
               type: "tween",
             }}
-            className="w-20 h-40 md:w-40 md:h-60 border-4 border-[#312E81] bg-white"
+            className="w-[12vw] h-[25vw] min-w-[50px] min-h-[100px] max-w-[120px] max-h-[200px] border-2 sm:border-4 border-[#312E81] bg-white"
             style={{
               backgroundImage:
                 "linear-gradient(135deg, #312E81 10%, transparent 10%, transparent 50%, #312E81 50%, #312E81 60%, transparent 60%, transparent 100%)",
-              backgroundSize: "20px 20px",
+              backgroundSize: "15px 15px",
             }}
           />
         </motion.div>
@@ -101,28 +101,28 @@ const StartScreen: React.FC = () => {
         {/* Floating Lines */}
         <motion.div
           variants={shapeVariants}
-          className="absolute top-1/3 left-[-50px] md:left-1/4"
+          className="absolute top-[30%] left-0 sm:left-[10%] md:left-[20%] hidden sm:block"
         >
           <motion.div
-            animate={{ x: [-50, 50, -50], rotate: [45, 90, 45] }}
+            animate={{ x: [-30, 30, -30], rotate: [45, 90, 45] }}
             transition={{
               duration: 4,
               repeat: Infinity,
               ease: "linear",
               type: "tween",
             }}
-            className="w-64 h-4 bg-[#06B6D4] border-2 border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]"
+            className="w-[20vw] max-w-[200px] h-1 sm:h-2 bg-[#06B6D4] border border-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]"
           />
         </motion.div>
 
         {/* Chaos Element */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.15, rotate: 360 }}
+          animate={{ opacity: 0.1, rotate: 360 }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] h-[150vw] -z-20 pointer-events-none"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] h-[120vw] sm:w-[100vw] sm:h-[100vw] -z-20 pointer-events-none"
         >
-          <div className="w-full h-full border-[100px] border-dashed border-[#6366F1] rounded-full" />
+          <div className="w-full h-full border-[30px] sm:border-[50px] md:border-[80px] border-dashed border-[#6366F1] rounded-full" />
         </motion.div>
       </div>
 
@@ -131,11 +131,11 @@ const StartScreen: React.FC = () => {
         initial={{ y: -100, opacity: 0, rotate: -5 }}
         animate={{ y: 0, opacity: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 120, damping: 10 }}
-        className="mb-16 text-center relative z-10"
+        className="mb-6 sm:mb-10 md:mb-12 text-center relative z-10"
       >
         <motion.div
           whileHover={{ scale: 1.05, rotate: 2 }}
-          className="relative bg-[#06B6D4] border-4 border-[#312E81] p-8 md:p-12 shadow-[16px_16px_0px_0px_rgba(49,46,129,1)]"
+          className="relative bg-[#06B6D4] border-4 border-[#312E81] p-4 sm:p-6 md:p-10 shadow-[8px_8px_0px_0px_rgba(49,46,129,1)] sm:shadow-[12px_12px_0px_0px_rgba(49,46,129,1)] md:shadow-[16px_16px_0px_0px_rgba(49,46,129,1)]"
         >
           {/* Corner Screws */}
           <div className="absolute top-2 left-2 w-4 h-4 bg-white border-2 border-black rounded-full flex items-center justify-center">
@@ -151,7 +151,7 @@ const StartScreen: React.FC = () => {
             <div className="w-2 h-0.5 bg-black rotate-45" />
           </div>
 
-          <h1 className="text-7xl md:text-[11rem] font-black tracking-tighter text-white uppercase leading-[0.85] drop-shadow-md italic">
+          <h1 className="text-[clamp(2.5rem,10vw,8rem)] font-black tracking-tighter text-white uppercase leading-[0.85] drop-shadow-md italic">
             <motion.span
               animate={{
                 scale: [1, 1.2, 0.92, 1.18, 1],
@@ -173,7 +173,7 @@ const StartScreen: React.FC = () => {
             <span className="text-[#EC4899] text-stroke-3">Row</span>
           </h1>
 
-          <div className="absolute -bottom-6 -right-6 bg-[#312E81] text-white px-4 py-1 font-bold rotate-[-5deg] border-2 border-white">
+          <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 bg-[#312E81] text-white px-2 py-0.5 sm:px-4 sm:py-1 text-xs sm:text-sm font-bold rotate-[-5deg] border-2 border-white">
             Made by Nishant
           </div>
         </motion.div>
@@ -218,30 +218,34 @@ const StartScreen: React.FC = () => {
           />
 
           {/* Content Container */}
-          <div className="relative px-16 py-8 flex items-center gap-6">
+          <div className="relative px-6 py-4 sm:px-10 sm:py-6 md:px-14 md:py-8 flex items-center gap-3 sm:gap-4 md:gap-6">
             {/* Icon Container with Rotation */}
             <motion.div
               variants={{
                 initial: { rotate: 0, scale: 1 },
                 hover: { rotate: 180, scale: 1.2 },
               }}
-              className="bg-[#312E81] p-3 rounded-full text-[#FACC15]"
+              className="bg-[#312E81] p-2 sm:p-3 rounded-full text-[#FACC15]"
             >
-              <Play size={40} fill="currentColor" strokeWidth={0} />
+              <Play
+                size={28}
+                className="sm:w-9 sm:h-9 md:w-10 md:h-10"
+                fill="currentColor"
+                strokeWidth={0}
+              />
             </motion.div>
 
             <div className="flex flex-col items-start">
-              <div className="flex items-center gap-2">
-                <span className="text-5xl font-black text-[#312E81] uppercase italic tracking-tighter leading-none">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="text-[clamp(1.5rem,5vw,3rem)] font-black text-[#312E81] uppercase italic tracking-tighter leading-none">
                   Start
                 </span>
                 <Zap
-                  className="text-[#EC4899] animate-pulse"
-                  size={32}
+                  className="text-[#EC4899] animate-pulse w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8"
                   strokeWidth={4}
                 />
               </div>
-              <span className="text-5xl font-black text-white text-stroke-indigo uppercase italic tracking-tighter leading-none pl-4">
+              <span className="text-[clamp(1.75rem,5.5vw,3.5rem)] font-black text-white text-stroke-indigo uppercase italic tracking-tighter leading-none pl-2 sm:pl-4">
                 Game
               </span>
             </div>
@@ -260,7 +264,7 @@ const StartScreen: React.FC = () => {
       </motion.button>
 
       {/* Footer Tag */}
-      <div className="mt-20 font-bold tracking-widest uppercase text-white/50 bg-[#312E81]/20 px-6 py-2 rounded-full border border-white/10 backdrop-blur-md">
+      <div className="mt-6 sm:mt-10 md:mt-16 text-xs sm:text-sm font-bold tracking-widest uppercase text-white/50 bg-[#312E81]/20 px-4 py-1.5 sm:px-6 sm:py-2 rounded-full border border-white/10 backdrop-blur-md">
         Press Start to Connect
       </div>
 

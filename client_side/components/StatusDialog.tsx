@@ -128,17 +128,17 @@ const StatusDialog: React.FC = () => {
           animate={{ scale: 1, rotate: 0, opacity: 1, y: 0 }}
           exit={{ scale: 0.5, rotate: 15, opacity: 0, y: 100 }}
           transition={{ type: "spring", damping: 15, stiffness: 200 }}
-          className="relative z-50 max-w-md w-full"
+          className="relative z-50 max-w-sm sm:max-w-md w-full mx-4"
         >
           <div
-            className={`relative border-[6px] border-black shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] ${bgClass} overflow-hidden`}
+            className={`relative border-4 sm:border-[6px] border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] sm:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] md:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] ${bgClass} overflow-hidden`}
           >
             {/* Decorative Corner */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-black/10 -rotate-45 transform origin-bottom-left translate-x-10 -translate-y-10" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rotate-12 transform translate-y-16 -translate-x-10" />
+            <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-black/10 -rotate-45 transform origin-bottom-left translate-x-10 -translate-y-10" />
+            <div className="absolute bottom-0 left-0 w-20 h-20 sm:w-32 sm:h-32 bg-white/10 rotate-12 transform translate-y-16 -translate-x-10" />
 
             {/* Content Container */}
-            <div className="p-8 flex flex-col items-center text-center relative z-10">
+            <div className="p-4 sm:p-6 md:p-8 flex flex-col items-center text-center relative z-10">
               {/* Icon Badge */}
               <motion.div
                 animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.2, 1] }}
@@ -148,38 +148,42 @@ const StatusDialog: React.FC = () => {
                   type: "tween",
                   ease: "easeInOut",
                 }}
-                className="bg-white border-4 border-black p-6 mb-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+                className="bg-white border-4 border-black p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
               >
                 {isWin ? (
                   <Trophy
-                    size={64}
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 text-black fill-yellow-400"
                     strokeWidth={2.5}
-                    className="text-black fill-yellow-400"
                   />
                 ) : (
-                  <Frown size={64} strokeWidth={2.5} className="text-black" />
+                  <Frown
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 text-black"
+                    strokeWidth={2.5}
+                  />
                 )}
               </motion.div>
 
               {/* Title */}
               <h2
-                className={`text-6xl font-black uppercase tracking-tighter leading-[0.9] drop-shadow-[4px_4px_0px_rgba(0,0,0,0.5)] ${textColorClass}`}
+                className={`text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tighter leading-[0.9] drop-shadow-[3px_3px_0px_rgba(0,0,0,0.5)] sm:drop-shadow-[4px_4px_0px_rgba(0,0,0,0.5)] ${textColorClass}`}
               >
                 {isWin ? "Victory!" : "Draw"}
               </h2>
 
-              <div className="bg-black text-white px-4 py-1 mt-4 -rotate-2 transform border-2 border-white/20">
-                <p className="text-xl font-bold uppercase tracking-widest">
+              <div className="bg-black text-white px-3 py-0.5 sm:px-4 sm:py-1 mt-3 sm:mt-4 -rotate-2 transform border-2 border-white/20">
+                <p className="text-base sm:text-lg md:text-xl font-bold uppercase tracking-widest">
                   {isWin ? winnerName : "No Winner"}
                 </p>
               </div>
 
-              <p className={`mt-2 font-bold opacity-80 ${textColorClass}`}>
+              <p
+                className={`mt-1.5 sm:mt-2 text-sm sm:text-base font-bold opacity-80 ${textColorClass}`}
+              >
                 {subText}
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-col gap-4 w-full mt-10">
+              <div className="flex flex-col gap-2.5 sm:gap-3 md:gap-4 w-full mt-6 sm:mt-8 md:mt-10">
                 <motion.button
                   whileHover={{
                     scale: 1.02,
@@ -194,9 +198,12 @@ const StatusDialog: React.FC = () => {
                     boxShadow: "0px 0px 0px 0px rgba(0,0,0,1)",
                   }}
                   onClick={resetGame}
-                  className="w-full py-4 bg-white border-4 border-black text-black font-black uppercase text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-3 transition-colors hover:bg-slate-50"
+                  className="w-full py-2.5 sm:py-3 md:py-4 bg-white border-4 border-black text-black font-black uppercase text-base sm:text-lg md:text-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 sm:gap-3 transition-colors hover:bg-slate-50"
                 >
-                  <RotateCcw size={24} strokeWidth={3} />
+                  <RotateCcw
+                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    strokeWidth={3}
+                  />
                   Rematch
                 </motion.button>
 
@@ -214,9 +221,9 @@ const StatusDialog: React.FC = () => {
                     boxShadow: "0px 0px 0px 0px rgba(0,0,0,1)",
                   }}
                   onClick={quitGame}
-                  className="w-full py-4 bg-black border-4 border-black text-white font-black uppercase text-xl shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3"
+                  className="w-full py-2.5 sm:py-3 md:py-4 bg-black border-4 border-black text-white font-black uppercase text-base sm:text-lg md:text-xl shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] sm:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2 sm:gap-3"
                 >
-                  <Menu size={24} strokeWidth={3} />
+                  <Menu className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={3} />
                   Main Menu
                 </motion.button>
               </div>

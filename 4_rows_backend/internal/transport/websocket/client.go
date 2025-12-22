@@ -282,12 +282,14 @@ func (c *Client) handleRematch() {
 			if clientPlayerNum == playerNum {
 				// The player who just requested
 				return NewMessage(TypeRematchWaiting, RematchWaitingPayload{
-					Message: "Waiting for opponent to accept rematch...",
+					Message:     "Waiting for opponent to accept rematch...",
+					IsInitiator: true,
 				})
 			} else {
 				// The other player
 				return NewMessage(TypeRematchWaiting, RematchWaitingPayload{
-					Message: "Opponent requested a rematch!",
+					Message:     "Opponent requested a rematch!",
+					IsInitiator: false,
 				})
 			}
 		})

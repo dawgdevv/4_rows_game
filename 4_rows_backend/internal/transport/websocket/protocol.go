@@ -65,7 +65,8 @@ type CellPosition struct {
 }
 
 type RematchWaitingPayload struct {
-	Message string `json:"message"`
+	Message     string `json:"message"`
+	IsInitiator bool   `json:"is_initiator"`
 }
 
 type RematchAcceptedPayload struct {

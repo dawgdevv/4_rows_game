@@ -2,21 +2,21 @@ import { create } from "zustand";
 import { useGameStore } from "./gameStore";
 
 type Message =
-  | "create_room"
-  | "room_created"
-  | "join_room"
-  | "room_joined"
-  | "game_start"
-  | "move"
-  | "move_result"
-  | "game_over"
-  | "rematch_request"
-  | "rematch_waiting"
-  | "rematch_accepted"
-  | "opponent_left"
-  | "error"
-  | "ping"
-  | "pong";
+    | "create_room"
+    | "room_created"
+    | "join_room"
+    | "room_joined"
+    | "game_start"
+    | "move"
+    | "move_result"
+    | "game_over"
+    | "rematch_request"
+    | "rematch_waiting"
+    | "rematch_accepted"
+    | "opponent_left"
+    | "error"
+    | "ping"
+    | "pong";
 
 
 interface SocketStore {
@@ -24,14 +24,14 @@ interface SocketStore {
     isConnected: boolean;
     roomCode: string | null;
     playerNumber: number | null;
-    error:string | null;
+    error: string | null;
 
-    connect:()=>void;
-    createRoom:()=>void;
-    joinRoom:(roomCode:string)=>void;
-    sendMove:(moveData:any)=>void;
-    requestRematch:()=>void;
-    disconnect:()=>void;
+    connect: () => void;
+    createRoom: () => void;
+    joinRoom: (roomCode: string) => void;
+    sendMove: (moveData: any) => void;
+    requestRematch: () => void;
+    disconnect: () => void;
 }
 
 export const useSocketStore = create<SocketStore>((set, get) => ({
@@ -39,7 +39,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
     isConnected: false,
     roomCode: null,
     playerNumber: null,
-    error:null,
+    error: null,
 
     connect: () => {
         const socket = new WebSocket("ws://localhost:8080/ws");
@@ -65,27 +65,27 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                     case "room_joined":
                         set({ roomCode: payload.room_code, playerNumber: 2 });
                         gameStore.setAppScreen('game'); // Ensure we switch to game view
-                         // If room was already waiting, we might need to wait for game_start
+                        // If room was already waiting, we might need to wait for game_start
                         break;
                     case "game_start":
-                         gameStore.setAppScreen('game');
-                         gameStore.resetGame();
-                         set({ playerNumber: payload.player_number });
-                         console.log("Game started! You are player:", payload.player_number);
-                         break;
+                        gameStore.setAppScreen('game');
+                        gameStore.resetGame();
+                        set({ playerNumber: payload.player_number });
+                        console.log("Game started! You are player:", payload.player_number);
+                        break;
                     case "move_result":
                         // The server confirms the move was valid and gives us the row/col
                         // payload: { column, row, player_number, next_player, valid }
                         // We need to update the board if it wasn't our local move (or even if it was, to be safe)
-                        
+
                         // NOTE: For local moves, we might have already updated vaguely, 
                         // but `triggerRemoteMove` can be used to ensure specific animations happen
                         // if we want to rely purely on server state.
-                        
+
                         // Ideally, we check if it's OUR move or THEIR move.
                         const myPlayerNum = get().playerNumber;
                         if (payload.player_number !== myPlayerNum) {
-                             gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1|2);
+                            gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1 | 2);
                         } else {
                             // It was our move. The store might have already optimistically updated? 
                             // Or rather, we should call completeDrop from here if we want to be authority-based.
@@ -94,14 +94,14 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                             // But `triggerRemoteMove` does logic again?
                             // Let's rely on `triggerRemoteMove` for consistency for now, 
                             // even for self if we removed optimistic updates.
-                             gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1|2);
+                            gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1 | 2);
                         }
                         break;
                     case "game_over":
                         // payload: { winner, winning_cells, is_draw }
                         gameStore.setGameOver(
-                            payload.winner as 1|2|0, 
-                            payload.winning_cells || [], 
+                            payload.winner as 1 | 2 | 0,
+                            payload.winning_cells || [],
                             payload.is_draw
                         );
                         break;
@@ -110,8 +110,12 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                         console.error("Server error:", payload.message);
                         break;
                     case "rematch_waiting":
-                        // Show waiting state
-                        gameStore.setRematchStatus("waiting");
+                        // payload: { message: string, is_initiator: boolean }
+                        if (payload.is_initiator) {
+                            gameStore.setRematchStatus("waiting_for_opponent");
+                        } else {
+                            gameStore.setRematchStatus("opponent_requested");
+                        }
                         break;
                     case "rematch_accepted":
                         // Both players agreed, reset the game
@@ -121,7 +125,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                     case "opponent_left":
                         set({ error: "Opponent left the game." });
                         gameStore.setAppScreen('start'); // Or show some modal
-                         break;
+                        break;
                     case "ping":
                         socket.send(JSON.stringify({ type: "pong" }));
                         break;
@@ -132,7 +136,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         };
 
         socket.onclose = () => {
-             set({ isConnected: false, socket: null, roomCode: null, playerNumber: null });
+            set({ isConnected: false, socket: null, roomCode: null, playerNumber: null });
         };
     },
 
@@ -142,14 +146,14 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
             socket.send(JSON.stringify({ type: "create_room" }));
         }
     },
-    
-    joinRoom: (roomCode: string) => {  
+
+    joinRoom: (roomCode: string) => {
         const { socket } = get();
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: "join_room", room_code: roomCode }));
         }
     },
-    
+
     sendMove: (column: number) => {
         const { socket } = get();
         if (socket && socket.readyState === WebSocket.OPEN) {

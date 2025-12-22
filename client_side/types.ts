@@ -26,12 +26,12 @@ export interface GameState {
   winner: Player | null;
   winningCells: { row: number; col: number }[];
   activeDrop: ActiveDrop | null;
-  
+
   // App Flow State
   appScreen: AppScreen;
   gameMode: GameMode;
   isSoundEnabled: boolean;
-  rematchStatus: "requested" | "waiting" | null;
+  rematchStatus: "waiting_for_opponent" | "opponent_requested" | null;
 
   // Actions
   startDrop: (colIndex: number) => void;
@@ -39,10 +39,10 @@ export interface GameState {
   resetGame: () => void;
   setAppScreen: (screen: AppScreen) => void;
   setGameMode: (mode: GameMode) => void;
-  setRematchStatus: (status: "requested" | "waiting" | null) => void;
+  setRematchStatus: (status: "waiting_for_opponent" | "opponent_requested" | null) => void;
   toggleSound: () => void;
   quitGame: () => void;
-  
+
   hoverColumn: number | null;
   setHoverColumn: (colIndex: number | null) => void;
 

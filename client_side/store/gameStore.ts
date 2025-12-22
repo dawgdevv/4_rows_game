@@ -61,7 +61,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   rematchStatus: null,
 
   setAppScreen: (screen: AppScreen) => set({ appScreen: screen }),
-  setRematchStatus: (status: "requested" | "waiting" | null) => set({ rematchStatus: status }),
+
+  setRematchStatus: (status) => set({ rematchStatus: status }),
   setGameMode: (mode: GameMode) => set({ gameMode: mode }),
 
   toggleSound: () => {
@@ -218,7 +219,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   setGameOver: (winner: Player | 0, winningCells: { row: number; col: number }[] = [], isDraw: boolean = false) => {
-    
+
     // For visual flare, play win/loss sound
     if (get().isSoundEnabled) {
       if (winner && !isDraw) {

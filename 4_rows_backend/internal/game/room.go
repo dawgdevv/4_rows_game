@@ -6,15 +6,17 @@ import (
 	"time"
 )
 
-const (
-	Rows = 6
-	Cols = 7
-)
+type GameState struct {
+	Board       [Rows][Cols]int
+	CurrentTurn int
+	GameOver    bool
+	Winner      int
+}
 
 type Room struct {
 	Code        string
 	Players     [2]PlayerSlot
-	Board       [Rows][Cols]int
+	Board       Board
 	CurrentTurn int
 	GameStarted bool
 	GameOver    bool
@@ -33,6 +35,18 @@ type RoomManager struct {
 }
 
 var manager *RoomManager
+
+func (r *Room) State() GameState {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return GameState{
+		Board:       r.Board.Grid,
+		CurrentTurn: r.CurrentTurn,
+		GameOver:    r.GameOver,
+		Winner:      r.Winner,
+	}
+}
 
 func GetRoomManager() *RoomManager {
 	if manager == nil {
@@ -103,81 +117,32 @@ func (rm *RoomManager) GetPlayerNumber(room *Room, playerID string) int {
 	}
 	return 0
 }
-
-func (r *Room) DropPiece(column int, playerNum int) (row int, valid bool) {
+func (r *Room) MakeMove(column int, playerNum int) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if r.GameOver {
-		return -1, false
+		return -1, ErrInvalidMove
 	}
 
 	if r.CurrentTurn != playerNum {
-		return -1, false
+		return -1, ErrNotYourTurn
 	}
 
-	if column < 0 || column >= Cols {
-		return -1, false
+	row, ok := r.Board.Drop(column, playerNum)
+	if !ok {
+		return -1, ErrInvalidMove
 	}
 
-	for row = Rows - 1; row >= 0; row-- {
-		if r.Board[row][column] == 0 {
-			r.Board[row][column] = playerNum
-			r.CurrentTurn = 3 - playerNum
-			return row, true
-		}
+	if won, _ := r.Board.CheckWin(row, column, playerNum); won {
+		r.GameOver = true
+		r.Winner = playerNum
+	} else if r.Board.IsDraw() {
+		r.GameOver = true
 	}
 
-	return -1, false
-}
-
-func (r *Room) CheckWin(row, col, player int) (bool, []CellPos) {
-	directions := [][2]int{{0, 1}, {1, 0}, {1, 1}, {1, -1}}
-
-	for _, dir := range directions {
-		cells := []CellPos{{Row: row, Col: col}}
-
-		for i := 1; i < 4; i++ {
-			nr, nc := row+dir[0]*i, col+dir[1]*i
-			if nr >= 0 && nr < Rows && nc >= 0 && nc < Cols && r.Board[nr][nc] == player {
-				cells = append(cells, CellPos{Row: nr, Col: nc})
-			} else {
-				break
-			}
-		}
-
-		for i := 1; i < 4; i++ {
-			nr, nc := row-dir[0]*i, col-dir[1]*i
-			if nr >= 0 && nr < Rows && nc >= 0 && nc < Cols && r.Board[nr][nc] == player {
-				cells = append(cells, CellPos{Row: nr, Col: nc})
-			} else {
-				break
-			}
-		}
-
-		if len(cells) >= 4 {
-			r.GameOver = true
-			r.Winner = player
-			return true, cells
-		}
-	}
-
-	return false, nil
-}
-
-func (r *Room) CheckDraw() bool {
-	for col := 0; col < Cols; col++ {
-		if r.Board[0][col] == 0 {
-			return false
-		}
-	}
-	r.GameOver = true
-	return true
-}
-
-type CellPos struct {
-	Row int
-	Col int
+	r.CurrentTurn = 3 - playerNum
+	return row, nil
 }
 
 func generateCode() string {

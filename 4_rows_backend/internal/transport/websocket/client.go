@@ -184,9 +184,9 @@ func (c *Client) handleMove(column int) {
 	}
 
 	playerNum := rm.GetPlayerNumber(room, c.ID)
-	row, valid := room.DropPiece(column, playerNum)
+	row, err := room.MakeMove(column, playerNum)
 
-	if !valid {
+	if err != nil {
 		c.SendJSON(NewError("invalid_move", "move not allowed"))
 		return
 	}
@@ -203,7 +203,7 @@ func (c *Client) handleMove(column int) {
 		return NewMessage(TypeMoveResult, moveResult)
 	})
 
-	won, cells := room.CheckWin(row, column, playerNum)
+	won, cells := room.Board.CheckWin(row, column, playerNum)
 	if won {
 		winCells := make([]CellPosition, len(cells))
 		for i, cell := range cells {
@@ -220,7 +220,7 @@ func (c *Client) handleMove(column int) {
 		return
 	}
 
-	if room.CheckDraw() {
+	if room.Board.IsDraw() {
 		c.Hub.BroadcastToRoom(roomCode, func(client *Client) OutgoingMessage {
 			return NewMessage(TypeGameOver, GameOverPayload{
 				Winner: 0,

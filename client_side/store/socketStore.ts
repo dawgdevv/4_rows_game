@@ -10,6 +10,9 @@ type Message =
   | "move"
   | "move_result"
   | "game_over"
+  | "rematch_request"
+  | "rematch_waiting"
+  | "rematch_accepted"
   | "opponent_left"
   | "error"
   | "ping"
@@ -27,6 +30,7 @@ interface SocketStore {
     createRoom:()=>void;
     joinRoom:(roomCode:string)=>void;
     sendMove:(moveData:any)=>void;
+    requestRematch:()=>void;
     disconnect:()=>void;
 }
 
@@ -105,6 +109,15 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                         set({ error: payload.message });
                         console.error("Server error:", payload.message);
                         break;
+                    case "rematch_waiting":
+                        // Show waiting state
+                        gameStore.setRematchStatus("waiting");
+                        break;
+                    case "rematch_accepted":
+                        // Both players agreed, reset the game
+                        gameStore.resetGame();
+                        gameStore.setRematchStatus(null);
+                        break;
                     case "opponent_left":
                         set({ error: "Opponent left the game." });
                         gameStore.setAppScreen('start'); // Or show some modal
@@ -141,6 +154,13 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         const { socket } = get();
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: "move", column: column }));
+        }
+    },
+
+    requestRematch: () => {
+        const { socket } = get();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "rematch_request" }));
         }
     },
 

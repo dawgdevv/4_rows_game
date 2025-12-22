@@ -1,5 +1,6 @@
 import React from "react";
 import { useGameStore } from "../store/gameStore";
+import { useSocketStore } from "../store/socketStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Frown, RotateCcw, Menu } from "lucide-react";
 
@@ -92,7 +93,8 @@ const Confetti: React.FC = () => {
 };
 
 const StatusDialog: React.FC = () => {
-  const { gameStatus, winner, resetGame, quitGame } = useGameStore();
+  const { gameStatus, winner, resetGame, quitGame, gameMode, rematchStatus } = useGameStore();
+  const { requestRematch } = useSocketStore();
 
   if (gameStatus === "playing") return null;
 
@@ -186,25 +188,34 @@ const StatusDialog: React.FC = () => {
               <div className="flex flex-col gap-2.5 sm:gap-3 md:gap-4 w-full mt-6 sm:mt-8 md:mt-10">
                 <motion.button
                   whileHover={{
-                    scale: 1.02,
-                    x: -4,
-                    y: -4,
-                    boxShadow: "8px 8px 0px 0px rgba(0,0,0,1)",
+                    scale: rematchStatus === "waiting" ? 1 : 1.02,
+                    x: rematchStatus === "waiting" ? 0 : -4,
+                    y: rematchStatus === "waiting" ? 0 : -4,
+                    boxShadow: rematchStatus === "waiting" ? "4px 4px 0px 0px rgba(0,0,0,1)" : "8px 8px 0px 0px rgba(0,0,0,1)",
                   }}
                   whileTap={{
-                    scale: 0.98,
-                    x: 2,
-                    y: 2,
+                    scale: rematchStatus === "waiting" ? 1 : 0.98,
+                    x: rematchStatus === "waiting" ? 0 : 2,
+                    y: rematchStatus === "waiting" ? 0 : 2,
                     boxShadow: "0px 0px 0px 0px rgba(0,0,0,1)",
                   }}
-                  onClick={resetGame}
-                  className="w-full py-2.5 sm:py-3 md:py-4 bg-white border-4 border-black text-black font-black uppercase text-base sm:text-lg md:text-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 sm:gap-3 transition-colors hover:bg-slate-50"
+                  onClick={() => {
+                    if (gameMode === "cpu") {
+                      resetGame();
+                    } else {
+                      requestRematch();
+                    }
+                  }}
+                  disabled={rematchStatus === "waiting"}
+                  className={`w-full py-2.5 sm:py-3 md:py-4 bg-white border-4 border-black text-black font-black uppercase text-base sm:text-lg md:text-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 sm:gap-3 transition-colors hover:bg-slate-50 ${
+                    rematchStatus === "waiting" ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
                 >
                   <RotateCcw
-                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    className={`w-5 h-5 sm:w-6 sm:h-6 ${rematchStatus === "waiting" ? "animate-spin" : ""}`}
                     strokeWidth={3}
                   />
-                  Rematch
+                  {rematchStatus === "waiting" ? "Waiting for opponent..." : "Rematch"}
                 </motion.button>
 
                 <motion.button

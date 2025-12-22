@@ -14,14 +14,15 @@ type GameState struct {
 }
 
 type Room struct {
-	Code        string
-	Players     [2]PlayerSlot
-	Board       Board
-	CurrentTurn int
-	GameStarted bool
-	GameOver    bool
-	Winner      int
-	mu          sync.Mutex
+	Code            string
+	Players         [2]PlayerSlot
+	Board           Board
+	CurrentTurn     int
+	GameStarted     bool
+	GameOver        bool
+	Winner          int
+	RematchRequests [2]bool
+	mu              sync.Mutex
 }
 
 type PlayerSlot struct {
@@ -143,6 +144,32 @@ func (r *Room) MakeMove(column int, playerNum int) (int, error) {
 
 	r.CurrentTurn = 3 - playerNum
 	return row, nil
+}
+
+func (r *Room) ResetGame() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Reset the board
+	r.Board = Board{}
+
+	// Reset game state
+	r.CurrentTurn = 1
+	r.GameOver = false
+	r.Winner = 0
+	r.RematchRequests = [2]bool{false, false}
+}
+
+func (r *Room) RequestRematch(playerNum int) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if playerNum < 1 || playerNum > 2 {
+		return false
+	}
+
+	r.RematchRequests[playerNum-1] = true
+	return r.RematchRequests[0] && r.RematchRequests[1]
 }
 
 func generateCode() string {

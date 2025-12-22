@@ -31,6 +31,7 @@ export interface GameState {
   appScreen: AppScreen;
   gameMode: GameMode;
   isSoundEnabled: boolean;
+  rematchStatus: "requested" | "waiting" | null;
 
   // Actions
   startDrop: (colIndex: number) => void;
@@ -38,6 +39,7 @@ export interface GameState {
   resetGame: () => void;
   setAppScreen: (screen: AppScreen) => void;
   setGameMode: (mode: GameMode) => void;
+  setRematchStatus: (status: "requested" | "waiting" | null) => void;
   toggleSound: () => void;
   quitGame: () => void;
   

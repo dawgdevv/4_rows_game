@@ -58,8 +58,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   appScreen: "start",
   gameMode: "pvp",
   isSoundEnabled: true,
+  rematchStatus: null,
 
   setAppScreen: (screen: AppScreen) => set({ appScreen: screen }),
+  setRematchStatus: (status: "requested" | "waiting" | null) => set({ rematchStatus: status }),
   setGameMode: (mode: GameMode) => set({ gameMode: mode }),
 
   toggleSound: () => {
@@ -159,6 +161,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       winner: null,
       winningCells: [],
       activeDrop: null,
+      rematchStatus: null,
     });
   },
 

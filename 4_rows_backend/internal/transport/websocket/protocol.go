@@ -3,18 +3,21 @@ package websocket
 type MessageType string
 
 const (
-	TypeCreateRoom   MessageType = "create_room"
-	TypeRoomCreated  MessageType = "room_created"
-	TypeJoinRoom     MessageType = "join_room"
-	TypeRoomJoined   MessageType = "room_joined"
-	TypeGameStart    MessageType = "game_start"
-	TypeMove         MessageType = "move"
-	TypeMoveResult   MessageType = "move_result"
-	TypeGameOver     MessageType = "game_over"
-	TypeOpponentLeft MessageType = "opponent_left"
-	TypeError        MessageType = "error"
-	TypePing         MessageType = "ping"
-	TypePong         MessageType = "pong"
+	TypeCreateRoom      MessageType = "create_room"
+	TypeRoomCreated     MessageType = "room_created"
+	TypeJoinRoom        MessageType = "join_room"
+	TypeRoomJoined      MessageType = "room_joined"
+	TypeGameStart       MessageType = "game_start"
+	TypeMove            MessageType = "move"
+	TypeMoveResult      MessageType = "move_result"
+	TypeGameOver        MessageType = "game_over"
+	TypeRematchRequest  MessageType = "rematch_request"
+	TypeRematchWaiting  MessageType = "rematch_waiting"
+	TypeRematchAccepted MessageType = "rematch_accepted"
+	TypeOpponentLeft    MessageType = "opponent_left"
+	TypeError           MessageType = "error"
+	TypePing            MessageType = "ping"
+	TypePong            MessageType = "pong"
 )
 
 type IncomingMessage struct {
@@ -59,6 +62,14 @@ type GameOverPayload struct {
 type CellPosition struct {
 	Row int `json:"row"`
 	Col int `json:"col"`
+}
+
+type RematchWaitingPayload struct {
+	Message string `json:"message"`
+}
+
+type RematchAcceptedPayload struct {
+	Message string `json:"message"`
 }
 
 type ErrorPayload struct {

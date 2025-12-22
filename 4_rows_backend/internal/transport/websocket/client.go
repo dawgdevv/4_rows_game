@@ -115,6 +115,9 @@ func (c *Client) handleMessage(rawMessage []byte) {
 	case TypeMove:
 		c.handleMove(msg.Column)
 
+	case TypeRematchRequest:
+		c.handleRematch()
+
 	default:
 		c.SendJSON(NewError("unknown_type", "message type not recognized"))
 	}
@@ -226,6 +229,67 @@ func (c *Client) handleMove(column int) {
 				Winner: 0,
 				IsDraw: true,
 			})
+		})
+	}
+}
+
+func (c *Client) handleRematch() {
+	roomCode := c.GetRoomCode()
+	if roomCode == "" {
+		c.SendJSON(NewError("not_in_room", "you are not in a room"))
+		return
+	}
+
+	rm := game.GetRoomManager()
+	room := rm.GetRoom(roomCode)
+	if room == nil {
+		c.SendJSON(NewError("room_gone", "room no longer exists"))
+		return
+	}
+
+	if !room.GameOver {
+		c.SendJSON(NewError("game_not_over", "game is still in progress"))
+		return
+	}
+
+	playerNum := rm.GetPlayerNumber(room, c.ID)
+	if playerNum == 0 {
+		c.SendJSON(NewError("not_player", "you are not a player in this room"))
+		return
+	}
+
+	// Mark this player's rematch request and check if both are ready
+	bothReady := room.RequestRematch(playerNum)
+
+	if bothReady {
+		// Both players want a rematch, reset the game
+		room.ResetGame()
+
+		log.Printf("room %s: both players agreed to rematch, resetting game", roomCode)
+
+		// Notify both players that the game is resetting
+		c.Hub.BroadcastToRoom(roomCode, func(client *Client) OutgoingMessage {
+			return NewMessage(TypeRematchAccepted, RematchAcceptedPayload{
+				Message: "Both players agreed! Starting new game...",
+			})
+		})
+	} else {
+		// Only one player requested rematch, notify the other
+		log.Printf("room %s: player %d requested rematch, waiting for opponent", roomCode, playerNum)
+
+		c.Hub.BroadcastToRoom(roomCode, func(client *Client) OutgoingMessage {
+			clientPlayerNum := rm.GetPlayerNumber(room, client.ID)
+			if clientPlayerNum == playerNum {
+				// The player who just requested
+				return NewMessage(TypeRematchWaiting, RematchWaitingPayload{
+					Message: "Waiting for opponent to accept rematch...",
+				})
+			} else {
+				// The other player
+				return NewMessage(TypeRematchWaiting, RematchWaitingPayload{
+					Message: "Opponent requested a rematch!",
+				})
+			}
 		})
 	}
 }

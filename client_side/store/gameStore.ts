@@ -7,6 +7,7 @@ import {
   ROWS,
   COLS,
   EMPTY_BOARD,
+  Player,
 } from "../types";
 import { checkWin, checkDraw } from "../utils/winCheck";
 
@@ -170,6 +171,69 @@ export const useGameStore = create<GameState>((set, get) => ({
       winner: null,
       winningCells: [],
       activeDrop: null,
+    });
+  },
+
+  triggerRemoteMove: (colIndex: number, row: number, player: Player) => {
+    // Only process if we're playing and it's not currently animating another drop
+    if (get().gameStatus !== "playing") return;
+
+    if (get().isSoundEnabled) {
+      playTone(720, 0.12, "triangle");
+    }
+
+    set({
+      activeDrop: {
+        col: colIndex,
+        row: row,
+        player: player,
+      },
+      hoverColumn: null,
+    });
+  },
+
+  completeRemoteDrop: () => {
+    const { board, activeDrop } = get();
+
+    if (!activeDrop) return;
+
+    if (get().isSoundEnabled) {
+      playTone(320, 0.16, "sine");
+    }
+
+    // Update board - server has already validated, just place the piece
+    const newBoard = board.map((row) => [...row]);
+    newBoard[activeDrop.row][activeDrop.col] = activeDrop.player;
+
+    // Don't check win/draw - server will send game_over message
+    // Just update the board and switch player
+    set({
+      board: newBoard,
+      currentPlayer: activeDrop.player === 1 ? 2 : 1,
+      activeDrop: null,
+    });
+  },
+
+  setGameOver: (winner: Player | 0, winningCells: { row: number; col: number }[] = [], isDraw: boolean = false) => {
+    
+    // For visual flare, play win/loss sound
+    if (get().isSoundEnabled) {
+      if (winner && !isDraw) {
+        setTimeout(() => {
+          playTone(880, 0.16, "square");
+          setTimeout(() => playTone(1040, 0.18, "sawtooth"), 120);
+        }, 120);
+      } else {
+        // Draw sound?
+        playTone(400, 0.3, "sine");
+      }
+    }
+
+    set({
+      gameStatus: isDraw ? "draw" : "won",
+      winner: isDraw ? null : (winner as Player),
+      winningCells: winningCells,
+      activeDrop: null, // Clear any active animation
     });
   },
 }));

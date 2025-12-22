@@ -38,64 +38,117 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
     error:null,
 
     connect: () => {
-        const socket = new WebSocket("wss://yourserver.com/socket");
+        const socket = new WebSocket("ws://localhost:8080/ws");
 
         socket.onopen = () => {
-            set({ isConnected: true, socket, error:null });
+            set({ isConnected: true, socket, error: null });
         };
 
         socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const gameStore = useGameStore.getState();
-            
-            switch (data.message) {
-                case "room_created":
-                    set({ roomCode: data.roomCode, playerNumber: 1 });
-                    break;
-                case "room_joined":
-                    set({ roomCode: data.roomCode, playerNumber: 2 });
-                    break;
-                case "move_result":
-                    gameStore.updateGameState(data.gameState);
-                    break;
-                case "game_over":
-                    gameStore.setGameOver(data.winner);
-                    break;
-                case "error":
-                    set({error: data.error});
-                    break;
-            }};
+            try {
+                const data = JSON.parse(event.data);
+                const gameStore = useGameStore.getState();
+                const payload = data.payload;
 
-            set({ socket });
+                console.log("WebSocket message:", data.type, payload);
 
+                switch (data.type) {
+                    case "room_created":
+                        console.log("Room created! Payload:", payload);
+                        console.log("Room code:", payload?.room_code);
+                        set({ roomCode: payload?.room_code, playerNumber: 1 });
+                        break;
+                    case "room_joined":
+                        set({ roomCode: payload.room_code, playerNumber: 2 });
+                        gameStore.setAppScreen('game'); // Ensure we switch to game view
+                         // If room was already waiting, we might need to wait for game_start
+                        break;
+                    case "game_start":
+                         gameStore.setAppScreen('game');
+                         gameStore.resetGame();
+                         set({ playerNumber: payload.player_number });
+                         console.log("Game started! You are player:", payload.player_number);
+                         break;
+                    case "move_result":
+                        // The server confirms the move was valid and gives us the row/col
+                        // payload: { column, row, player_number, next_player, valid }
+                        // We need to update the board if it wasn't our local move (or even if it was, to be safe)
+                        
+                        // NOTE: For local moves, we might have already updated vaguely, 
+                        // but `triggerRemoteMove` can be used to ensure specific animations happen
+                        // if we want to rely purely on server state.
+                        
+                        // Ideally, we check if it's OUR move or THEIR move.
+                        const myPlayerNum = get().playerNumber;
+                        if (payload.player_number !== myPlayerNum) {
+                             gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1|2);
+                        } else {
+                            // It was our move. The store might have already optimistically updated? 
+                            // Or rather, we should call completeDrop from here if we want to be authority-based.
+                            // Currently `completeDrop` does logic + checkWin. 
+                            // Since server checks win, we just need to place the piece.
+                            // But `triggerRemoteMove` does logic again?
+                            // Let's rely on `triggerRemoteMove` for consistency for now, 
+                            // even for self if we removed optimistic updates.
+                             gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1|2);
+                        }
+                        break;
+                    case "game_over":
+                        // payload: { winner, winning_cells, is_draw }
+                        gameStore.setGameOver(
+                            payload.winner as 1|2|0, 
+                            payload.winning_cells || [], 
+                            payload.is_draw
+                        );
+                        break;
+                    case "error":
+                        set({ error: payload.message });
+                        console.error("Server error:", payload.message);
+                        break;
+                    case "opponent_left":
+                        set({ error: "Opponent left the game." });
+                        gameStore.setAppScreen('start'); // Or show some modal
+                         break;
+                    case "ping":
+                        socket.send(JSON.stringify({ type: "pong" }));
+                        break;
+                }
+            } catch (e) {
+                console.error("Failed to parse websocket message", e);
+            }
+        };
+
+        socket.onclose = () => {
+             set({ isConnected: false, socket: null, roomCode: null, playerNumber: null });
+        };
+    },
+
+    createRoom: () => {
+        const { socket } = get();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "create_room" }));
         }
+    },
+    
+    joinRoom: (roomCode: string) => {  
+        const { socket } = get();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "join_room", room_code: roomCode }));
+        }
+    },
+    
+    sendMove: (column: number) => {
+        const { socket } = get();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "move", column: column }));
+        }
+    },
 
-        createRoom: () => {
-            const { socket } = get();
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ message: "create_room" }));
-            }
-        },
-        
-        joinRoom: (roomCode: string) => {  
-            const { socket } = get();
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ message: "join_room", roomCode }));
-            }
-        },
-        
-        sendMove: (moveData: any) => {
-            const { socket } = get();
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ message: "move", moveData }));
-            }
-        },
-
-        disconnect: () => {
-            const { socket } = get();
-            if (socket) {
-                socket.close();
-                set({ socket: null, isConnected: false, roomCode: null, playerNumber: null });
-            }
-        },
+    disconnect: () => {
+        const { socket } = get();
+        if (socket) {
+            socket.close();
+            set({ socket: null, isConnected: false, roomCode: null, playerNumber: null });
+        }
+    },
 }));

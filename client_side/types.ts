@@ -10,7 +10,7 @@ export interface WinResult {
 }
 
 export type GameStatus = 'playing' | 'won' | 'draw';
-export type AppScreen = 'start' | 'mode_selection' | 'game';
+export type AppScreen = 'start' | 'mode_selection' | 'room_selection' | 'game';
 export type GameMode = 'pvp' | 'cpu';
 
 export interface ActiveDrop {
@@ -43,6 +43,11 @@ export interface GameState {
   
   hoverColumn: number | null;
   setHoverColumn: (colIndex: number | null) => void;
+
+  // Remote Actions
+  triggerRemoteMove: (colIndex: number, row: number, player: Player) => void;
+  completeRemoteDrop: () => void;
+  setGameOver: (winner: Player | 0, winningCells?: { row: number; col: number }[], isDraw?: boolean) => void;
 }
 
 export const ROWS = 6;

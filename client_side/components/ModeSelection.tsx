@@ -8,7 +8,13 @@ const ModeSelection: React.FC = () => {
 
   const handleSelect = (mode: "pvp" | "cpu") => {
     setGameMode(mode);
-    setAppScreen("game");
+    if (mode === "cpu") {
+      // CPU mode goes directly to game
+      setAppScreen("game");
+    } else {
+      // Multiplayer goes to room selection
+      setAppScreen("room_selection");
+    }
   };
 
   const container = {

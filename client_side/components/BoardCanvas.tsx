@@ -10,6 +10,7 @@ import {
   Line,
 } from "react-konva";
 import { useGameStore } from "../store/gameStore";
+import { useSocketStore } from "../store/socketStore";
 import { ROWS, COLS, ActiveDrop } from "../types";
 import Konva from "konva";
 import { animate } from "framer-motion";
@@ -448,13 +449,17 @@ const BoardCanvas: React.FC = () => {
     board,
     startDrop,
     completeDrop,
+    completeRemoteDrop,
     winningCells,
     hoverColumn,
     setHoverColumn,
     gameStatus,
     activeDrop,
     currentPlayer,
+    gameMode,
   } = useGameStore();
+
+  const { sendMove } = useSocketStore();
 
   const [scale, setScale] = useState(1);
   const stageRef = useRef<Konva.Stage>(null);
@@ -547,7 +552,13 @@ const BoardCanvas: React.FC = () => {
   }, []);
 
   const handleInteraction = (colIndex: number) => {
-    if (!interactionDisabled) {
+    if (interactionDisabled) return;
+    
+    if (gameMode === "pvp") {
+      // Multiplayer: send move to server
+      sendMove(colIndex);
+    } else {
+      // Single player: handle locally
       startDrop(colIndex);
     }
   };
@@ -652,7 +663,7 @@ const BoardCanvas: React.FC = () => {
                 <Group x={-FRAME_THICKNESS} y={-FRAME_THICKNESS}>
                   <DroppingDisc
                     drop={activeDrop}
-                    onLand={completeDrop}
+                    onLand={gameMode === "pvp" ? completeRemoteDrop : completeDrop}
                     onImpact={triggerBoardShake}
                   />
                 </Group>

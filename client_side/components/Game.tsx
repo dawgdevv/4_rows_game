@@ -6,6 +6,7 @@ import Controls from "./Controls";
 import StatusDialog from "./StatusDialog";
 import StartScreen from "./StartScreen";
 import ModeSelection from "./ModeSelection";
+import RoomSelection from "./RoomSelection";
 import { getBestMove } from "../utils/ai";
 
 // --- Background Components ---
@@ -364,6 +365,12 @@ const Game: React.FC = () => {
           {appScreen === "mode_selection" && (
             <div className="pointer-events-auto w-full min-h-full flex-1">
               <ModeSelection key="mode" />
+            </div>
+          )}
+
+          {appScreen === "room_selection" && (
+            <div className="pointer-events-auto w-full min-h-full flex-1">
+              <RoomSelection key="room" />
             </div>
           )}
 

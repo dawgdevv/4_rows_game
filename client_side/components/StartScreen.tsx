@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Play, Zap } from "lucide-react";
+import { Play, Zap, User } from "lucide-react";
 import { useGameStore } from "../store/gameStore";
 
 const StartScreen: React.FC = () => {
-  const { setAppScreen } = useGameStore();
+  const { setAppScreen, setUsername, username } = useGameStore();
+  const [inputName, setInputName] = useState(username);
+
+  const handleStart = () => {
+    if (inputName.trim()) {
+      setUsername(inputName.trim());
+      setAppScreen("mode_selection");
+    }
+  };
 
   const backgroundVariants = {
     hidden: { opacity: 0 },
@@ -179,13 +187,37 @@ const StartScreen: React.FC = () => {
         </motion.div>
       </motion.div>
 
+      {/* Username Input */}
+      <motion.div
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="mb-6 w-full max-w-sm z-20"
+      >
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 bg-[#312E81] p-2 rounded-lg">
+            <User className="w-5 h-5 text-[#FACC15]" strokeWidth={3} />
+          </div>
+          <input
+            type="text"
+            value={inputName}
+            onChange={(e) => setInputName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleStart()}
+            placeholder="Enter your name..."
+            maxLength={15}
+            className="w-full pl-16 pr-4 py-4 bg-white border-4 border-[#312E81] shadow-[6px_6px_0px_0px_rgba(49,46,129,1)] text-lg font-bold text-[#312E81] placeholder-[#312E81]/50 focus:outline-none focus:shadow-[8px_8px_0px_0px_rgba(49,46,129,1)] transition-shadow"
+          />
+        </div>
+      </motion.div>
+
       {/* Interactive 3D Button - Creative Style */}
       <motion.button
         whileHover="hover"
         initial="initial"
         whileTap="tap"
-        onClick={() => setAppScreen("mode_selection")}
-        className="relative group outline-none bg-transparent border-none p-0 cursor-pointer z-20"
+        onClick={handleStart}
+        disabled={!inputName.trim()}
+        className={`relative group outline-none bg-transparent border-none p-0 cursor-pointer z-20 ${!inputName.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {/* Shadow Layer (Deep Violet) */}
         <motion.div

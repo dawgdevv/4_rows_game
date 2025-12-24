@@ -1,9 +1,12 @@
 package game
 
 import (
+	"log"
 	"math/rand"
 	"sync"
 	"time"
+
+	"4_rows_backend/internal/storage"
 )
 
 type GameState struct {
@@ -22,6 +25,7 @@ type Room struct {
 	GameOver        bool
 	Winner          int
 	RematchRequests [2]bool
+	IsBotGame       bool
 	mu              sync.Mutex
 }
 
@@ -31,8 +35,9 @@ type PlayerSlot struct {
 }
 
 type RoomManager struct {
-	rooms map[string]*Room
-	mu    sync.RWMutex
+	rooms   map[string]*Room
+	mu      sync.RWMutex
+	storage *storage.SQLiteStorage
 }
 
 var manager *RoomManager
@@ -58,6 +63,49 @@ func GetRoomManager() *RoomManager {
 	return manager
 }
 
+// SetStorage sets the SQLite storage for persistence
+func (rm *RoomManager) SetStorage(s *storage.SQLiteStorage) {
+	rm.storage = s
+}
+
+// saveRoom persists a room to SQLite if storage is configured
+func (rm *RoomManager) saveRoom(room *Room) {
+	if rm.storage == nil {
+		return
+	}
+
+	data := &storage.RoomData{
+		Code:        room.Code,
+		Player1ID:   room.Players[0].ID,
+		Player2ID:   room.Players[1].ID,
+		Board:       room.Board.Grid,
+		CurrentTurn: room.CurrentTurn,
+		GameStarted: room.GameStarted,
+		GameOver:    room.GameOver,
+		Winner:      room.Winner,
+		IsBotGame:   room.IsBotGame,
+	}
+
+	if err := rm.storage.SaveRoom(data); err != nil {
+		log.Printf("Error saving room %s to SQLite: %v", room.Code, err)
+	} else {
+		log.Printf("Room %s saved to SQLite", room.Code)
+	}
+}
+
+// updateActivity updates the last activity timestamp in SQLite
+func (rm *RoomManager) updateActivity(code string) {
+	if rm.storage != nil {
+		rm.storage.UpdateLastActivity(code)
+	}
+}
+
+// SaveRoomState saves the current state of a room to SQLite (call after MakeMove)
+func (rm *RoomManager) SaveRoomState(room *Room) {
+	rm.saveRoom(room)
+	rm.updateActivity(room.Code)
+}
+
 func (rm *RoomManager) CreateRoom(playerID string) *Room {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
@@ -75,6 +123,31 @@ func (rm *RoomManager) CreateRoom(playerID string) *Room {
 	room.Players[0] = PlayerSlot{ID: playerID, Connected: true}
 
 	rm.rooms[code] = room
+	rm.saveRoom(room)
+	return room
+}
+
+func (rm *RoomManager) CreateBotRoom(playerID string) *Room {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+
+	code := generateCode()
+
+	for rm.rooms[code] != nil {
+		code = generateCode()
+	}
+
+	room := &Room{
+		Code:        code,
+		CurrentTurn: 1,
+		IsBotGame:   true,
+		GameStarted: true, // Bot game starts immediately
+	}
+	room.Players[0] = PlayerSlot{ID: playerID, Connected: true}
+	room.Players[1] = PlayerSlot{ID: "bot", Connected: true}
+
+	rm.rooms[code] = room
+	rm.saveRoom(room)
 	return room
 }
 
@@ -94,6 +167,7 @@ func (rm *RoomManager) JoinRoom(code string, playerID string) (*Room, error) {
 	room.Players[1] = PlayerSlot{ID: playerID, Connected: true}
 	room.GameStarted = true
 
+	rm.saveRoom(room)
 	return room, nil
 }
 
@@ -107,6 +181,9 @@ func (rm *RoomManager) RemoveRoom(code string) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 	delete(rm.rooms, code)
+	if rm.storage != nil {
+		rm.storage.DeleteRoom(code)
+	}
 }
 
 func (rm *RoomManager) GetPlayerNumber(room *Room, playerID string) int {

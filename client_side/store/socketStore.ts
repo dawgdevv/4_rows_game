@@ -16,7 +16,8 @@ type Message =
     | "opponent_left"
     | "error"
     | "ping"
-    | "pong";
+    | "pong"
+    | "create_bot_game";
 
 
 interface SocketStore {
@@ -25,9 +26,11 @@ interface SocketStore {
     roomCode: string | null;
     playerNumber: number | null;
     error: string | null;
+    isBotGame: boolean;
 
     connect: () => void;
     createRoom: () => void;
+    createBotGame: () => void;
     joinRoom: (roomCode: string) => void;
     sendMove: (moveData: any) => void;
     requestRematch: () => void;
@@ -40,9 +43,11 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
     roomCode: null,
     playerNumber: null,
     error: null,
+    isBotGame: false,
 
     connect: () => {
-        const socket = new WebSocket("ws://localhost:8080/ws");
+        const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws";
+        const socket = new WebSocket(wsUrl);
 
         socket.onopen = () => {
             set({ isConnected: true, socket, error: null });
@@ -143,7 +148,16 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
     createRoom: () => {
         const { socket } = get();
         if (socket && socket.readyState === WebSocket.OPEN) {
+            set({ isBotGame: false });
             socket.send(JSON.stringify({ type: "create_room" }));
+        }
+    },
+
+    createBotGame: () => {
+        const { socket } = get();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            set({ isBotGame: true });
+            socket.send(JSON.stringify({ type: "create_bot_game" }));
         }
     },
 
@@ -172,7 +186,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         const { socket } = get();
         if (socket) {
             socket.close();
-            set({ socket: null, isConnected: false, roomCode: null, playerNumber: null });
+            set({ socket: null, isConnected: false, roomCode: null, playerNumber: null, isBotGame: false });
         }
     },
 }));

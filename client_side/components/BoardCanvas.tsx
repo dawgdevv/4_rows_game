@@ -148,9 +148,8 @@ const AnimatedBolt: React.FC<{ x: number; y: number }> = ({ x, y }) => {
 const Arc: React.FC<any> = (props) => (
   <Path
     {...props}
-    data={`M ${props.radius} 0 A ${props.radius} ${props.radius} 0 0 1 ${
-      props.radius * Math.cos((props.angle * Math.PI) / 180)
-    } ${props.radius * Math.sin((props.angle * Math.PI) / 180)}`}
+    data={`M ${props.radius} 0 A ${props.radius} ${props.radius} 0 0 1 ${props.radius * Math.cos((props.angle * Math.PI) / 180)
+      } ${props.radius * Math.sin((props.angle * Math.PI) / 180)}`}
   />
 );
 
@@ -163,11 +162,9 @@ const BrutalistDisc: React.FC<{
     <Circle radius={radius} fill="black" x={3} y={3} opacity={0.3} />
     <Circle radius={radius} fill={color} stroke="black" strokeWidth={3} />
     <Path
-      data={`M ${-radius * 0.5} ${-radius * 0.5} Q ${0} ${-radius * 0.9} ${
-        radius * 0.5
-      } ${-radius * 0.5} L ${radius * 0.3} ${-radius * 0.2} Q ${0} ${
-        -radius * 0.5
-      } ${-radius * 0.3} ${-radius * 0.2} Z`}
+      data={`M ${-radius * 0.5} ${-radius * 0.5} Q ${0} ${-radius * 0.9} ${radius * 0.5
+        } ${-radius * 0.5} L ${radius * 0.3} ${-radius * 0.2} Q ${0} ${-radius * 0.5
+        } ${-radius * 0.3} ${-radius * 0.2} Z`}
       fill="white"
       opacity={0.5}
     />
@@ -459,7 +456,7 @@ const BoardCanvas: React.FC = () => {
     gameMode,
   } = useGameStore();
 
-  const { sendMove } = useSocketStore();
+  const { sendMove, isBotGame, isConnected } = useSocketStore();
 
   const [scale, setScale] = useState(1);
   const stageRef = useRef<Konva.Stage>(null);
@@ -531,21 +528,18 @@ const BoardCanvas: React.FC = () => {
     const w = INNER_BOARD_WIDTH;
     const h = INNER_BOARD_HEIGHT;
 
-    let path = `M ${r} 0 H ${w - r} Q ${w} 0 ${w} ${r} V ${h - r} Q ${w} ${h} ${
-      w - r
-    } ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+    let path = `M ${r} 0 H ${w - r} Q ${w} 0 ${w} ${r} V ${h - r} Q ${w} ${h} ${w - r
+      } ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
 
     for (let rIdx = 0; rIdx < ROWS; rIdx++) {
       for (let cIdx = 0; cIdx < COLS; cIdx++) {
         const cx = PADDING + cIdx * CELL_SIZE + CELL_SIZE / 2;
         const cy = PADDING + rIdx * CELL_SIZE + CELL_SIZE / 2;
         path += ` M ${cx} ${cy - HOLE_RADIUS}`;
-        path += ` A ${HOLE_RADIUS} ${HOLE_RADIUS} 0 1 0 ${cx} ${
-          cy + HOLE_RADIUS
-        }`;
-        path += ` A ${HOLE_RADIUS} ${HOLE_RADIUS} 0 1 0 ${cx} ${
-          cy - HOLE_RADIUS
-        }`;
+        path += ` A ${HOLE_RADIUS} ${HOLE_RADIUS} 0 1 0 ${cx} ${cy + HOLE_RADIUS
+          }`;
+        path += ` A ${HOLE_RADIUS} ${HOLE_RADIUS} 0 1 0 ${cx} ${cy - HOLE_RADIUS
+          }`;
       }
     }
     return path;
@@ -553,12 +547,13 @@ const BoardCanvas: React.FC = () => {
 
   const handleInteraction = (colIndex: number) => {
     if (interactionDisabled) return;
-    
-    if (gameMode === "pvp") {
-      // Multiplayer: send move to server
+
+    // Use server for PvP or bot games when connected
+    if (isConnected && (gameMode === "pvp" || isBotGame)) {
+      // Multiplayer or Bot game: send move to server
       sendMove(colIndex);
     } else {
-      // Single player: handle locally
+      // Local single player (fallback): handle locally
       startDrop(colIndex);
     }
   };
@@ -663,7 +658,7 @@ const BoardCanvas: React.FC = () => {
                 <Group x={-FRAME_THICKNESS} y={-FRAME_THICKNESS}>
                   <DroppingDisc
                     drop={activeDrop}
-                    onLand={gameMode === "pvp" ? completeRemoteDrop : completeDrop}
+                    onLand={(isConnected && (gameMode === "pvp" || isBotGame)) ? completeRemoteDrop : completeDrop}
                     onImpact={triggerBoardShake}
                   />
                 </Group>

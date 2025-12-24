@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"4_rows_backend/internal/bot"
+	"4_rows_backend/internal/events"
 	"4_rows_backend/internal/game"
 
 	"github.com/gorilla/websocket"
@@ -118,6 +120,9 @@ func (c *Client) handleMessage(rawMessage []byte) {
 	case TypeRematchRequest:
 		c.handleRematch()
 
+	case TypeCreateBotGame:
+		c.handleCreateBotGame()
+
 	default:
 		c.SendJSON(NewError("unknown_type", "message type not recognized"))
 	}
@@ -220,6 +225,18 @@ func (c *Client) handleMove(column int) {
 				IsDraw:       false,
 			})
 		})
+
+		// Publish game completed event to Kafka
+		if producer := events.GetProducer(); producer != nil {
+			producer.PublishGameCompleted(events.GameCompletedEvent{
+				RoomCode:        roomCode,
+				Player1Name:     room.Players[0].ID, // TODO: Use actual player names
+				Player2Name:     room.Players[1].ID,
+				Winner:          playerNum,
+				IsBotGame:       room.IsBotGame,
+				DurationSeconds: 0, // TODO: Track actual duration
+			})
+		}
 		return
 	}
 
@@ -230,6 +247,24 @@ func (c *Client) handleMove(column int) {
 				IsDraw: true,
 			})
 		})
+
+		// Publish draw event to Kafka
+		if producer := events.GetProducer(); producer != nil {
+			producer.PublishGameCompleted(events.GameCompletedEvent{
+				RoomCode:        roomCode,
+				Player1Name:     room.Players[0].ID,
+				Player2Name:     room.Players[1].ID,
+				Winner:          0,
+				IsBotGame:       room.IsBotGame,
+				DurationSeconds: 0,
+			})
+		}
+		return
+	}
+
+	// If it's a bot game and now it's the bot's turn, make the bot move
+	if room.IsBotGame && room.CurrentTurn == 2 {
+		go c.makeBotMove(room)
 	}
 }
 
@@ -255,6 +290,19 @@ func (c *Client) handleRematch() {
 	playerNum := rm.GetPlayerNumber(room, c.ID)
 	if playerNum == 0 {
 		c.SendJSON(NewError("not_player", "you are not a player in this room"))
+		return
+	}
+
+	// For bot games, auto-accept rematch immediately
+	if room.IsBotGame {
+		room.ResetGame()
+
+		log.Printf("room %s: bot game rematch, resetting game", roomCode)
+
+		// Notify player that the game is resetting
+		c.SendJSON(NewMessage(TypeRematchAccepted, RematchAcceptedPayload{
+			Message: "Starting new game against bot...",
+		}))
 		return
 	}
 
@@ -341,4 +389,94 @@ func (c *Client) GetRoomCode() string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.RoomCode
+}
+
+func (c *Client) handleCreateBotGame() {
+	rm := game.GetRoomManager()
+	room := rm.CreateBotRoom(c.ID)
+
+	c.SetRoomCode(room.Code)
+	c.Hub.JoinRoom(room.Code, c)
+
+	log.Printf("client %s created bot game %s", c.ID, room.Code)
+
+	// Send room created message
+	c.SendJSON(NewMessage(TypeRoomCreated, RoomCreatedPayload{
+		RoomCode: room.Code,
+	}))
+
+	// Send game start message (player is always player 1 in bot games)
+	c.SendJSON(NewMessage(TypeGameStart, GameStartPayload{
+		RoomCode:     room.Code,
+		PlayerNumber: 1,
+	}))
+}
+
+func (c *Client) makeBotMove(room *game.Room) {
+	// Add a small delay to make the bot feel more natural
+	time.Sleep(500 * time.Millisecond)
+
+	roomCode := room.Code
+
+	// Check if the game is still valid
+	if room.GameOver {
+		return
+	}
+
+	// Create the bot and get the best move
+	gameBot := bot.NewBot()
+	humanPlayer := 1 // Human is always player 1 in bot games
+	botColumn := gameBot.GetBestMove(&room.Board, humanPlayer)
+
+	if botColumn < 0 {
+		return
+	}
+
+	// Make the bot's move
+	row, err := room.MakeMove(botColumn, 2)
+	if err != nil {
+		log.Printf("bot move error: %v", err)
+		return
+	}
+
+	// Broadcast the bot's move result
+	moveResult := MoveResultPayload{
+		Column:       botColumn,
+		Row:          row,
+		PlayerNumber: 2,
+		NextPlayer:   room.CurrentTurn,
+		Valid:        true,
+	}
+
+	c.Hub.BroadcastToRoom(roomCode, func(client *Client) OutgoingMessage {
+		return NewMessage(TypeMoveResult, moveResult)
+	})
+
+	// Check for bot win
+	won, cells := room.Board.CheckWin(row, botColumn, 2)
+	if won {
+		winCells := make([]CellPosition, len(cells))
+		for i, cell := range cells {
+			winCells[i] = CellPosition{Row: cell.Row, Col: cell.Col}
+		}
+
+		c.Hub.BroadcastToRoom(roomCode, func(client *Client) OutgoingMessage {
+			return NewMessage(TypeGameOver, GameOverPayload{
+				Winner:       2,
+				WinningCells: winCells,
+				IsDraw:       false,
+			})
+		})
+		return
+	}
+
+	// Check for draw
+	if room.Board.IsDraw() {
+		c.Hub.BroadcastToRoom(roomCode, func(client *Client) OutgoingMessage {
+			return NewMessage(TypeGameOver, GameOverPayload{
+				Winner: 0,
+				IsDraw: true,
+			})
+		})
+	}
 }

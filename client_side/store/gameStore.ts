@@ -8,6 +8,7 @@ import {
   COLS,
   EMPTY_BOARD,
   Player,
+  ActiveDrop,
 } from "../types";
 import { checkWin, checkDraw } from "../utils/winCheck";
 
@@ -45,6 +46,7 @@ const playTone = (
   oscillator.stop(now + duration);
 };
 
+
 export const useGameStore = create<GameState>((set, get) => ({
   board: JSON.parse(JSON.stringify(EMPTY_BOARD)),
   currentPlayer: 1,
@@ -52,6 +54,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   winner: null,
   winningCells: [],
   activeDrop: null,
+  pendingMoves: [],  // Queue for moves waiting to be animated
   hoverColumn: null,
 
   // App State
@@ -59,11 +62,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   gameMode: "pvp",
   isSoundEnabled: true,
   rematchStatus: null,
+  username: "",
 
   setAppScreen: (screen: AppScreen) => set({ appScreen: screen }),
 
   setRematchStatus: (status) => set({ rematchStatus: status }),
   setGameMode: (mode: GameMode) => set({ gameMode: mode }),
+  setUsername: (name: string) => set({ username: name }),
 
   toggleSound: () => {
     const newMuteState = !get().isSoundEnabled;
@@ -162,6 +167,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       winner: null,
       winningCells: [],
       activeDrop: null,
+      pendingMoves: [],
       rematchStatus: null,
     });
   },
@@ -175,23 +181,52 @@ export const useGameStore = create<GameState>((set, get) => ({
       winner: null,
       winningCells: [],
       activeDrop: null,
+      pendingMoves: [],
     });
   },
 
   triggerRemoteMove: (colIndex: number, row: number, player: Player) => {
-    // Only process if we're playing and it's not currently animating another drop
+    // Only process if we're playing
     if (get().gameStatus !== "playing") return;
+
+    // Skip if this cell is already occupied (move already processed)
+    const currentBoard = get().board;
+    if (currentBoard[row][colIndex] !== null) {
+      return;
+    }
+
+    // Skip if there's already an active drop for this exact position
+    const currentDrop = get().activeDrop;
+    if (currentDrop && currentDrop.col === colIndex && currentDrop.row === row) {
+      return;
+    }
+
+    // Skip if this move is already in the queue
+    const pendingMoves = get().pendingMoves;
+    if (pendingMoves.some(m => m.col === colIndex && m.row === row)) {
+      return;
+    }
+
+    const newMove: ActiveDrop = {
+      col: colIndex,
+      row: row,
+      player: player,
+    };
+
+    // If there's already an animation in progress, queue this move
+    if (get().activeDrop) {
+      set((state) => ({
+        pendingMoves: [...state.pendingMoves, newMove],
+      }));
+      return;
+    }
 
     if (get().isSoundEnabled) {
       playTone(720, 0.12, "triangle");
     }
 
     set({
-      activeDrop: {
-        col: colIndex,
-        row: row,
-        player: player,
-      },
+      activeDrop: newMove,
       hoverColumn: null,
     });
   },
@@ -215,6 +250,28 @@ export const useGameStore = create<GameState>((set, get) => ({
       board: newBoard,
       currentPlayer: activeDrop.player === 1 ? 2 : 1,
       activeDrop: null,
+    });
+
+    // Process next move in queue if any
+    get().processNextMove();
+  },
+
+  processNextMove: () => {
+    const { pendingMoves, gameStatus } = get();
+
+    if (pendingMoves.length === 0 || gameStatus !== "playing") return;
+
+    // Get next move from queue
+    const [nextMove, ...remaining] = pendingMoves;
+
+    if (get().isSoundEnabled) {
+      playTone(720, 0.12, "triangle");
+    }
+
+    set({
+      pendingMoves: remaining,
+      activeDrop: nextMove,
+      hoverColumn: null,
     });
   },
 

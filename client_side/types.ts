@@ -26,12 +26,14 @@ export interface GameState {
   winner: Player | null;
   winningCells: { row: number; col: number }[];
   activeDrop: ActiveDrop | null;
+  pendingMoves: ActiveDrop[];  // Queue of moves waiting to be animated
 
   // App Flow State
   appScreen: AppScreen;
   gameMode: GameMode;
   isSoundEnabled: boolean;
   rematchStatus: "waiting_for_opponent" | "opponent_requested" | null;
+  username: string;
 
   // Actions
   startDrop: (colIndex: number) => void;
@@ -42,6 +44,7 @@ export interface GameState {
   setRematchStatus: (status: "waiting_for_opponent" | "opponent_requested" | null) => void;
   toggleSound: () => void;
   quitGame: () => void;
+  setUsername: (name: string) => void;
 
   hoverColumn: number | null;
   setHoverColumn: (colIndex: number | null) => void;
@@ -50,6 +53,7 @@ export interface GameState {
   triggerRemoteMove: (colIndex: number, row: number, player: Player) => void;
   completeRemoteDrop: () => void;
   setGameOver: (winner: Player | 0, winningCells?: { row: number; col: number }[], isDraw?: boolean) => void;
+  processNextMove: () => void;  // Process next move from queue
 }
 
 export const ROWS = 6;

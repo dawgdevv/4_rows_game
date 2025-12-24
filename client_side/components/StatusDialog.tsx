@@ -93,8 +93,8 @@ const Confetti: React.FC = () => {
 };
 
 const StatusDialog: React.FC = () => {
-  const { gameStatus, winner, resetGame, quitGame, gameMode, rematchStatus } = useGameStore();
-  const { requestRematch } = useSocketStore();
+  const { gameStatus, winner, resetGame, quitGame, gameMode, rematchStatus, username } = useGameStore();
+  const { requestRematch, isBotGame, isConnected, disconnect } = useSocketStore();
 
   if (gameStatus === "playing") return null;
 
@@ -107,7 +107,15 @@ const StatusDialog: React.FC = () => {
     : "bg-slate-300";
 
   const textColorClass = isWin && winner === 1 ? "text-white" : "text-black";
-  const winnerName = winner === 1 ? "Player 1" : "Player 2";
+  // Show username for player 1 if available, use "Bot" for player 2 in CPU mode
+  const getWinnerName = () => {
+    if (winner === 1) {
+      return username || "Player 1";
+    } else {
+      return gameMode === "cpu" ? "Bot" : "Player 2";
+    }
+  };
+  const winnerName = getWinnerName();
   const subText = isWin ? "Takes the Crown!" : "Stalemate reached";
 
   return (
@@ -211,10 +219,12 @@ const StatusDialog: React.FC = () => {
                       boxShadow: "0px 0px 0px 0px rgba(0,0,0,1)",
                     }}
                     onClick={() => {
-                      if (gameMode === "cpu") {
-                        resetGame();
-                      } else {
+                      // Use server rematch for connected games (PvP or bot)
+                      if (isConnected && (gameMode === "pvp" || isBotGame)) {
                         requestRematch();
+                      } else {
+                        // Local CPU fallback
+                        resetGame();
                       }
                     }}
                     disabled={rematchStatus === "waiting_for_opponent"}
@@ -243,8 +253,9 @@ const StatusDialog: React.FC = () => {
                     boxShadow: "0px 0px 0px 0px rgba(0,0,0,1)",
                   }}
                   onClick={() => {
-                    if (gameMode !== 'cpu') {
-                      useSocketStore.getState().disconnect();
+                    // Disconnect for any connected game (PvP or bot)
+                    if (isConnected) {
+                      disconnect();
                     }
                     quitGame();
                   }}

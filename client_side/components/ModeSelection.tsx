@@ -2,15 +2,32 @@ import React from "react";
 import { motion } from "framer-motion";
 import { User, Cpu, ArrowLeft } from "lucide-react";
 import { useGameStore } from "../store/gameStore";
+import { useSocketStore } from "../store/socketStore";
 
 const ModeSelection: React.FC = () => {
   const { setGameMode, setAppScreen } = useGameStore();
+  const { connect, isConnected, createBotGame } = useSocketStore();
 
   const handleSelect = (mode: "pvp" | "cpu") => {
     setGameMode(mode);
     if (mode === "cpu") {
-      // CPU mode goes directly to game
-      setAppScreen("game");
+      // CPU mode uses server-side bot via WebSocket
+      if (!isConnected) {
+        // Connect first, then create bot game
+        connect();
+        // Wait for connection and create bot game
+        const checkConnection = setInterval(() => {
+          const { isConnected, socket } = useSocketStore.getState();
+          if (isConnected && socket?.readyState === WebSocket.OPEN) {
+            clearInterval(checkConnection);
+            useSocketStore.getState().createBotGame();
+          }
+        }, 100);
+        // Timeout after 5 seconds
+        setTimeout(() => clearInterval(checkConnection), 5000);
+      } else {
+        createBotGame();
+      }
     } else {
       // Multiplayer goes to room selection
       setAppScreen("room_selection");

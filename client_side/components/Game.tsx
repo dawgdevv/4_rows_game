@@ -7,7 +7,6 @@ import StatusDialog from "./StatusDialog";
 import StartScreen from "./StartScreen";
 import ModeSelection from "./ModeSelection";
 import RoomSelection from "./RoomSelection";
-import { getBestMove } from "../utils/ai";
 
 // --- Background Components ---
 
@@ -251,32 +250,8 @@ const Game: React.FC = () => {
     board,
   } = useGameStore();
 
-  useEffect(() => {
-    if (
-      appScreen === "game" &&
-      gameMode === "cpu" &&
-      currentPlayer === 2 &&
-      gameStatus === "playing" &&
-      !activeDrop
-    ) {
-      const timer = setTimeout(() => {
-        const bestMove = getBestMove(board, 2);
-        if (bestMove !== -1) {
-          startDrop(bestMove);
-        }
-      }, 700);
-
-      return () => clearTimeout(timer);
-    }
-  }, [
-    appScreen,
-    gameMode,
-    currentPlayer,
-    gameStatus,
-    activeDrop,
-    board,
-    startDrop,
-  ]);
+  // NOTE: Bot moves are now handled server-side via WebSocket
+  // The old client-side AI logic has been removed
 
   return (
     <div className="relative w-full min-h-screen overflow-hidden flex flex-col">

@@ -18,6 +18,8 @@ const (
 	TypeError           MessageType = "error"
 	TypePing            MessageType = "ping"
 	TypePong            MessageType = "pong"
+	TypeCreateBotGame   MessageType = "create_bot_game"
+	TypeBotMove         MessageType = "bot_move"
 )
 
 type IncomingMessage struct {

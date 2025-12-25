@@ -93,8 +93,8 @@ const Confetti: React.FC = () => {
 };
 
 const StatusDialog: React.FC = () => {
-  const { gameStatus, winner, resetGame, quitGame, gameMode, rematchStatus, username } = useGameStore();
-  const { requestRematch, isBotGame, isConnected, disconnect } = useSocketStore();
+  const { gameStatus, winner, resetGame, quitGame, gameMode, rematchStatus, username, opponentName } = useGameStore();
+  const { requestRematch, isBotGame, isConnected, disconnect, playerNumber } = useSocketStore();
 
   if (gameStatus === "playing") return null;
 
@@ -107,13 +107,23 @@ const StatusDialog: React.FC = () => {
     : "bg-slate-300";
 
   const textColorClass = isWin && winner === 1 ? "text-white" : "text-black";
-  // Show username for player 1 if available, use "Bot" for player 2 in CPU mode
+
+  // Show correct winner name based on absolute player positions
   const getWinnerName = () => {
-    if (winner === 1) {
-      return username || "Player 1";
-    } else {
+    if (!isConnected) {
+      // Local logic
+      if (winner === 1) return username || "Player 1";
       return gameMode === "cpu" ? "Bot" : "Player 2";
     }
+
+    // Multiplayer logic
+    const myPlayerNum = playerNumber || 1;
+    // If the winner index matches my player number, I won.
+    if (winner === myPlayerNum) {
+      return username || "Me";
+    }
+    // Otherwise, the opponent won.
+    return opponentName || "Opponent";
   };
   const winnerName = getWinnerName();
   const subText = isWin ? "Takes the Crown!" : "Stalemate reached";

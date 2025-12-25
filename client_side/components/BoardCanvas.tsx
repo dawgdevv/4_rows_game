@@ -476,15 +476,9 @@ const BoardCanvas: React.FC = () => {
   // 4. Not my turn
   const interactionDisabled = gameStatus !== "playing" || !!activeDrop || isMovePending || !isMyTurn;
 
-  // Helper for relative coloring
-  // If online/bot: Me = Red (Primary), Opponent = Yellow (Secondary)
-  // If local: P1 = Red, P2 = Yellow
+  // Fixed Coloring: Player 1 = Red, Player 2 = Yellow
   const getVisualColor = (playerVal: number) => {
-    if (!isConnected) {
-      return playerVal === 1 ? "#FF4D4D" : "#FFD700";
-    }
-    const myPlayerNum = playerNumber || 1;
-    return playerVal === myPlayerNum ? "#FF4D4D" : "#FFD700";
+    return playerVal === 1 ? "#FF4D4D" : "#FFD700";
   };
 
   // Avoid unnecessary hover updates while interactions are disabled.

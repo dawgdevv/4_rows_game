@@ -19,15 +19,31 @@ const Controls: React.FC = () => {
   const { isConnected, playerNumber } = useSocketStore();
   const isPlayer2 = isConnected && playerNumber === 2;
 
-  // Relative Coloring Logic:
-  // If I am Player 2, I want to see myself on the Left (Red).
-  // Left Box = Me (Red), Right Box = Opponent (Yellow)
+  // Absolute Coloring Logic:
+  // Left Box = Player 1 (Red)
+  // Right Box = Player 2 (Yellow)
 
-  const leftName = isPlayer2 ? (username || "Me") : (username || "P1");
-  const rightName = isPlayer2 ? (opponentName || "Opponent") : (opponentName || (gameMode === "cpu" ? "Bot" : "P2"));
+  let leftName = "Player 1";
+  let rightName = "Player 2";
 
-  const isLeftActive = isPlayer2 ? currentPlayer === 2 : currentPlayer === 1;
-  const isRightActive = isPlayer2 ? currentPlayer === 1 : currentPlayer === 2;
+  if (isConnected) {
+    // If I am Player 1: Left (P1) is "Me", Right (P2) is Opponent
+    // If I am Player 2: Left (P1) is Opponent, Right (P2) is "Me"
+    if (playerNumber === 1) {
+      leftName = username || "Me";
+      rightName = opponentName || "Opponent";
+    } else {
+      leftName = opponentName || "Opponent";
+      rightName = username || "Me";
+    }
+  } else {
+    // Local mode
+    leftName = "Player 1";
+    rightName = gameMode === "cpu" ? "Bot" : "Player 2";
+  }
+
+  const isLeftActive = currentPlayer === 1;
+  const isRightActive = currentPlayer === 2;
 
   return (
     <div className="absolute top-3 sm:top-4 left-0 right-0 px-3 sm:px-4 md:px-8 z-20 flex flex-wrap sm:flex-nowrap gap-3 items-center justify-between pointer-events-none">

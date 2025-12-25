@@ -56,6 +56,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   activeDrop: null,
   pendingMoves: [],  // Queue for moves waiting to be animated
   hoverColumn: null,
+  isMovePending: false,
 
   // App State
   appScreen: "start",
@@ -85,11 +86,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   setHoverColumn: (colIndex) => set({ hoverColumn: colIndex }),
+  setMovePending: (pending: boolean) => set({ isMovePending: pending }),
 
   startDrop: (colIndex: number) => {
-    const { board, currentPlayer, gameStatus, activeDrop } = get();
+    const { board, currentPlayer, gameStatus, activeDrop, isMovePending } = get();
 
-    if (gameStatus !== "playing" || activeDrop) return;
+    if (gameStatus !== "playing" || activeDrop || isMovePending) return;
 
     // Find the lowest empty row
     let targetRow = -1;
@@ -188,24 +190,31 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   triggerRemoteMove: (colIndex: number, row: number, player: Player) => {
+    console.log(`[GameStore] triggerRemoteMove called: col=${colIndex}, row=${row}, player=${player}`);
     // Only process if we're playing
-    if (get().gameStatus !== "playing") return;
+    if (get().gameStatus !== "playing") {
+      console.log("[GameStore] triggerRemoteMove ignored: gameStatus not playing");
+      return;
+    }
 
     // Skip if this cell is already occupied (move already processed)
     const currentBoard = get().board;
     if (currentBoard[row][colIndex] !== null) {
+      console.log("[GameStore] triggerRemoteMove ignored: cell already occupied");
       return;
     }
 
     // Skip if there's already an active drop for this exact position
     const currentDrop = get().activeDrop;
     if (currentDrop && currentDrop.col === colIndex && currentDrop.row === row) {
+      console.log("[GameStore] triggerRemoteMove ignored: activeDrop matches");
       return;
     }
 
     // Skip if this move is already in the queue
     const pendingMoves = get().pendingMoves;
     if (pendingMoves.some(m => m.col === colIndex && m.row === row)) {
+      console.log("[GameStore] triggerRemoteMove ignored: already in pendingMoves");
       return;
     }
 
@@ -217,6 +226,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // If there's already an animation in progress, queue this move
     if (get().activeDrop) {
+      console.log("[GameStore] triggerRemoteMove: queuing move (activeDrop exists)");
       set((state) => ({
         pendingMoves: [...state.pendingMoves, newMove],
       }));
@@ -227,6 +237,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       playTone(720, 0.12, "triangle");
     }
 
+    console.log("[GameStore] triggerRemoteMove: setting activeDrop");
     set({
       activeDrop: newMove,
       hoverColumn: null,

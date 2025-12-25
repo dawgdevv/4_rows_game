@@ -27,6 +27,7 @@ export interface GameState {
   winningCells: { row: number; col: number }[];
   activeDrop: ActiveDrop | null;
   pendingMoves: ActiveDrop[];  // Queue of moves waiting to be animated
+  isMovePending: boolean;
 
   // App Flow State
   appScreen: AppScreen;
@@ -50,6 +51,7 @@ export interface GameState {
 
   hoverColumn: number | null;
   setHoverColumn: (colIndex: number | null) => void;
+  setMovePending: (pending: boolean) => void;
 
   // Remote Actions
   triggerRemoteMove: (colIndex: number, row: number, player: Player) => void;

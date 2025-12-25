@@ -30,12 +30,12 @@ const STAGE_WIDTH = TOTAL_BOARD_WIDTH + LEG_WIDTH * 2;
 const STAGE_HEIGHT = TOTAL_BOARD_HEIGHT + 350;
 const BOARD_Y_OFFSET = 140;
 
-const ColumnArrow: React.FC<{ colIndex: number; player: number }> = ({
+const ColumnArrow: React.FC<{ colIndex: number; player: number; color: string }> = ({
   colIndex,
   player,
+  color,
 }) => {
   const groupRef = useRef<Konva.Group>(null);
-  const color = player === 1 ? "#FF4D4D" : "#FFD700";
 
   useEffect(() => {
     if (!groupRef.current) return;
@@ -204,7 +204,8 @@ const DroppingDisc: React.FC<{
   drop: ActiveDrop;
   onLand: () => void;
   onImpact: () => void;
-}> = ({ drop, onLand, onImpact }) => {
+  color: string;
+}> = ({ drop, onLand, onImpact, color }) => {
   const groupRef = useRef<Konva.Group>(null);
 
   const startY = -200;
@@ -245,7 +246,7 @@ const DroppingDisc: React.FC<{
   return (
     <Group ref={groupRef} x={x} y={startY}>
       <BrutalistDisc
-        color={drop.player === 1 ? "#FF4D4D" : "#FFD700"}
+        color={color}
         radius={HOLE_RADIUS - 1}
       />
     </Group>
@@ -454,17 +455,37 @@ const BoardCanvas: React.FC = () => {
     activeDrop,
     currentPlayer,
     gameMode,
+    isMovePending,
   } = useGameStore();
 
-  const { sendMove, isBotGame, isConnected } = useSocketStore();
+  const { sendMove, isBotGame, isConnected, playerNumber } = useSocketStore();
 
   const [scale, setScale] = useState(1);
   const stageRef = useRef<Konva.Stage>(null);
   const boardGroupRef = useRef<Konva.Group>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Disable pointer interactions while a disc is mid-air or the game is over to prevent duplicate drops.
-  const interactionDisabled = gameStatus !== "playing" || !!activeDrop;
+  // Determine if it is the local player's turn
+  // In local mode (isConnected=false), it's always "my turn" (shared device)
+  const isMyTurn = !isConnected || currentPlayer === (playerNumber || 1);
+
+  // Disable interactions if:
+  // 1. Game not playing
+  // 2. Animation active
+  // 3. Move pending server response
+  // 4. Not my turn
+  const interactionDisabled = gameStatus !== "playing" || !!activeDrop || isMovePending || !isMyTurn;
+
+  // Helper for relative coloring
+  // If online/bot: Me = Red (Primary), Opponent = Yellow (Secondary)
+  // If local: P1 = Red, P2 = Yellow
+  const getVisualColor = (playerVal: number) => {
+    if (!isConnected) {
+      return playerVal === 1 ? "#FF4D4D" : "#FFD700";
+    }
+    const myPlayerNum = playerNumber || 1;
+    return playerVal === myPlayerNum ? "#FF4D4D" : "#FFD700";
+  };
 
   // Avoid unnecessary hover updates while interactions are disabled.
   const setHoverColumnSafe = (colIndex: number | null) => {
@@ -645,7 +666,7 @@ const BoardCanvas: React.FC = () => {
                       y={PADDING + rIdx * CELL_SIZE + CELL_SIZE / 2}
                     >
                       <BrutalistDisc
-                        color={cell === 1 ? "#FF4D4D" : "#FFD700"}
+                        color={getVisualColor(cell as 1 | 2)}
                         radius={HOLE_RADIUS - 1}
                         isWinning={isWinning}
                       />
@@ -658,6 +679,7 @@ const BoardCanvas: React.FC = () => {
                 <Group x={-FRAME_THICKNESS} y={-FRAME_THICKNESS}>
                   <DroppingDisc
                     drop={activeDrop}
+                    color={getVisualColor(activeDrop.player)}
                     onLand={(isConnected && (gameMode === "pvp" || isBotGame)) ? completeRemoteDrop : completeDrop}
                     onImpact={triggerBoardShake}
                   />
@@ -706,7 +728,11 @@ const BoardCanvas: React.FC = () => {
             {hoverColumn !== null &&
               !activeDrop &&
               gameStatus === "playing" && (
-                <ColumnArrow colIndex={hoverColumn} player={currentPlayer} />
+                <ColumnArrow
+                  colIndex={hoverColumn}
+                  player={currentPlayer}
+                  color={getVisualColor(currentPlayer)}
+                />
               )}
 
             {Array.from({ length: COLS }).map((_, cIdx) => (

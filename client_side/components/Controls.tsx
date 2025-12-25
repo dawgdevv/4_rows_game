@@ -1,5 +1,6 @@
 import React from "react";
 import { useGameStore } from "../store/gameStore";
+import { useSocketStore } from "../store/socketStore";
 import { RefreshCw, Home, Volume2, VolumeX, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -15,10 +16,18 @@ const Controls: React.FC = () => {
     opponentName,
   } = useGameStore();
 
-  // Get display name for player 1
-  const player1Name = username || "P1";
-  // Get display name for player 2 (use opponent name if available, otherwise Bot or P2)
-  const player2Name = opponentName || (gameMode === "cpu" ? "Bot" : "P2");
+  const { isConnected, playerNumber } = useSocketStore();
+  const isPlayer2 = isConnected && playerNumber === 2;
+
+  // Relative Coloring Logic:
+  // If I am Player 2, I want to see myself on the Left (Red).
+  // Left Box = Me (Red), Right Box = Opponent (Yellow)
+
+  const leftName = isPlayer2 ? (username || "Me") : (username || "P1");
+  const rightName = isPlayer2 ? (opponentName || "Opponent") : (opponentName || (gameMode === "cpu" ? "Bot" : "P2"));
+
+  const isLeftActive = isPlayer2 ? currentPlayer === 2 : currentPlayer === 1;
+  const isRightActive = isPlayer2 ? currentPlayer === 1 : currentPlayer === 2;
 
   return (
     <div className="absolute top-3 sm:top-4 left-0 right-0 px-3 sm:px-4 md:px-8 z-20 flex flex-wrap sm:flex-nowrap gap-3 items-center justify-between pointer-events-none">
@@ -42,17 +51,17 @@ const Controls: React.FC = () => {
         {/* Player 1 Box */}
         <motion.div
           animate={{
-            scale: currentPlayer === 1 ? 1.1 : 0.9,
-            opacity: currentPlayer === 1 ? 1 : 0.6,
-            y: currentPlayer === 1 ? 0 : 5,
+            scale: isLeftActive ? 1.1 : 0.9,
+            opacity: isLeftActive ? 1 : 0.6,
+            y: isLeftActive ? 0 : 5,
           }}
-          className={`flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-3 border-black rounded-xl shadow-neo transition-colors duration-300 ${currentPlayer === 1
+          className={`flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-3 border-black rounded-xl shadow-neo transition-colors duration-300 ${isLeftActive
             ? "bg-player1 text-white"
             : "bg-slate-200 text-slate-500"
             }`}
         >
           <span className="font-black text-lg sm:text-xl md:text-2xl tracking-tighter drop-shadow-sm max-w-[100px] truncate">
-            {player1Name}
+            {leftName}
           </span>
         </motion.div>
 
@@ -60,8 +69,8 @@ const Controls: React.FC = () => {
         <div className="w-16 sm:w-20 md:w-24 flex justify-center items-center">
           <motion.div
             animate={{
-              rotate: currentPlayer === 1 ? 180 : 0,
-              x: currentPlayer === 1 ? -12 : 12, // Move towards active player
+              rotate: isLeftActive ? 180 : 0,
+              x: isLeftActive ? -12 : 12, // Move towards active player
               scale: [1, 1.25, 1], // Pulse effect
             }}
             key={currentPlayer} // Re-trigger animation on change
@@ -75,7 +84,7 @@ const Controls: React.FC = () => {
             <ArrowRight
               size={40}
               strokeWidth={5}
-              className={currentPlayer === 1 ? "text-player1" : "text-player2"}
+              className={isLeftActive ? "text-player1" : "text-player2"}
             />
           </motion.div>
         </div>
@@ -83,17 +92,17 @@ const Controls: React.FC = () => {
         {/* Player 2 Box */}
         <motion.div
           animate={{
-            scale: currentPlayer === 2 ? 1.1 : 0.9,
-            opacity: currentPlayer === 2 ? 1 : 0.6,
-            y: currentPlayer === 2 ? 0 : 5,
+            scale: isRightActive ? 1.1 : 0.9,
+            opacity: isRightActive ? 1 : 0.6,
+            y: isRightActive ? 0 : 5,
           }}
-          className={`flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-3 border-black rounded-xl shadow-neo transition-colors duration-300 ${currentPlayer === 2
+          className={`flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-3 border-black rounded-xl shadow-neo transition-colors duration-300 ${isRightActive
             ? "bg-player2 text-black"
             : "bg-slate-200 text-slate-500"
             }`}
         >
           <span className="font-black text-lg sm:text-xl md:text-2xl tracking-tighter drop-shadow-sm">
-            {player2Name}
+            {rightName}
           </span>
         </motion.div>
       </div>

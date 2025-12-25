@@ -85,31 +85,19 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                         console.log("Game started! You are player:", payload.player_number);
                         console.log("Opponent name:", opponentName);
                         break;
+                        break;
                     case "move_result":
+                        console.log("[SocketStore] move_result received:", payload);
+                        gameStore.setMovePending(false);
                         // The server confirms the move was valid and gives us the row/col
                         // payload: { column, row, player_number, next_player, valid }
-                        // We need to update the board if it wasn't our local move (or even if it was, to be safe)
 
-                        // NOTE: For local moves, we might have already updated vaguely, 
-                        // but `triggerRemoteMove` can be used to ensure specific animations happen
-                        // if we want to rely purely on server state.
-
-                        // Ideally, we check if it's OUR move or THEIR move.
                         const currentPlayerNum = get().playerNumber;
-                        if (payload.player_number !== currentPlayerNum) {
-                            gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1 | 2);
-                        } else {
-                            // It was our move. The store might have already optimistically updated? 
-                            // Or rather, we should call completeDrop from here if we want to be authority-based.
-                            // Currently `completeDrop` does logic + checkWin. 
-                            // Since server checks win, we just need to place the piece.
-                            // But `triggerRemoteMove` does logic again?
-                            // Let's rely on `triggerRemoteMove` for consistency for now, 
-                            // even for self if we removed optimistic updates.
-                            gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1 | 2);
-                        }
+                        // Always trigger remote move to ensure consistency
+                        gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1 | 2);
                         break;
                     case "game_over":
+                        gameStore.setMovePending(false);
                         // payload: { winner, winning_cells, is_draw }
                         gameStore.setGameOver(
                             payload.winner as 1 | 2 | 0,
@@ -118,6 +106,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                         );
                         break;
                     case "error":
+                        gameStore.setMovePending(false);
                         set({ error: payload.message });
                         console.error("Server error:", payload.message);
                         break;
@@ -190,7 +179,9 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
     sendMove: (column: number) => {
         const { socket } = get();
+        const gameStore = useGameStore.getState();
         if (socket && socket.readyState === WebSocket.OPEN) {
+            gameStore.setMovePending(true);
             socket.send(JSON.stringify({ type: "move", column: column }));
         }
     },

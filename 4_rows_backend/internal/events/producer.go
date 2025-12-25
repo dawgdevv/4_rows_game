@@ -36,7 +36,7 @@ func NewKafkaProducer(brokers []string, topic string) *KafkaProducer {
 		Topic:        topic,
 		Balancer:     &kafka.LeastBytes{},
 		BatchTimeout: 10 * time.Millisecond,
-		Async:        true, // Non-blocking writes
+		Async:        false, // Sync writes for better error visibility
 	}
 
 	producer = &KafkaProducer{
@@ -44,7 +44,23 @@ func NewKafkaProducer(brokers []string, topic string) *KafkaProducer {
 		enabled: true,
 	}
 
-	log.Printf("Kafka producer initialized for topic: %s", topic)
+	// Test connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	testMsg := kafka.Message{
+		Key:   []byte("test"),
+		Value: []byte(`{"type":"connection_test"}`),
+	}
+
+	if err := writer.WriteMessages(ctx, testMsg); err != nil {
+		log.Printf("Warning: Kafka connection failed: %v", err)
+		log.Println("Game events will not be published to Kafka")
+		producer.enabled = false
+	} else {
+		log.Printf("Kafka producer initialized and connected to topic: %s", topic)
+	}
+
 	return producer
 }
 

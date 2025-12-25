@@ -13,7 +13,9 @@ import (
 type RoomData struct {
 	Code         string
 	Player1ID    string
+	Player1Name  string
 	Player2ID    string
+	Player2Name  string
 	Board        [6][7]int
 	CurrentTurn  int
 	GameStarted  bool
@@ -50,7 +52,9 @@ func createTables(db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS rooms (
 		code TEXT PRIMARY KEY,
 		player1_id TEXT NOT NULL,
+		player1_name TEXT DEFAULT '',
 		player2_id TEXT DEFAULT '',
+		player2_name TEXT DEFAULT '',
 		board TEXT NOT NULL,
 		current_turn INTEGER DEFAULT 1,
 		game_started INTEGER DEFAULT 0,
@@ -75,14 +79,16 @@ func (s *SQLiteStorage) SaveRoom(room *RoomData) error {
 
 	query := `
 	INSERT OR REPLACE INTO rooms 
-		(code, player1_id, player2_id, board, current_turn, game_started, game_over, winner, is_bot_game, last_activity)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+		(code, player1_id, player1_name, player2_id, player2_name, board, current_turn, game_started, game_over, winner, is_bot_game, last_activity)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 	`
 
 	_, err = s.db.Exec(query,
 		room.Code,
 		room.Player1ID,
+		room.Player1Name,
 		room.Player2ID,
+		room.Player2Name,
 		string(boardJSON),
 		room.CurrentTurn,
 		boolToInt(room.GameStarted),
@@ -97,7 +103,7 @@ func (s *SQLiteStorage) SaveRoom(room *RoomData) error {
 // GetRoom retrieves a room from the database
 func (s *SQLiteStorage) GetRoom(code string) (*RoomData, error) {
 	query := `
-	SELECT code, player1_id, player2_id, board, current_turn, game_started, game_over, winner, is_bot_game, created_at, last_activity
+	SELECT code, player1_id, player1_name, player2_id, player2_name, board, current_turn, game_started, game_over, winner, is_bot_game, created_at, last_activity
 	FROM rooms WHERE code = ?
 	`
 
@@ -110,7 +116,9 @@ func (s *SQLiteStorage) GetRoom(code string) (*RoomData, error) {
 	err := row.Scan(
 		&room.Code,
 		&room.Player1ID,
+		&room.Player1Name,
 		&room.Player2ID,
+		&room.Player2Name,
 		&boardJSON,
 		&room.CurrentTurn,
 		&gameStarted,

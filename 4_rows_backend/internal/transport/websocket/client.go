@@ -109,10 +109,10 @@ func (c *Client) handleMessage(rawMessage []byte) {
 		c.SendJSON(NewMessage(TypePong, nil))
 
 	case TypeCreateRoom:
-		c.handleCreateRoom()
+		c.handleCreateRoom(msg.PlayerName)
 
 	case TypeJoinRoom:
-		c.handleJoinRoom(msg.RoomCode)
+		c.handleJoinRoom(msg.RoomCode, msg.PlayerName)
 
 	case TypeMove:
 		c.handleMove(msg.Column)
@@ -121,35 +121,41 @@ func (c *Client) handleMessage(rawMessage []byte) {
 		c.handleRematch()
 
 	case TypeCreateBotGame:
-		c.handleCreateBotGame()
+		c.handleCreateBotGame(msg.PlayerName)
 
 	default:
 		c.SendJSON(NewError("unknown_type", "message type not recognized"))
 	}
 }
 
-func (c *Client) handleCreateRoom() {
+func (c *Client) handleCreateRoom(playerName string) {
 	rm := game.GetRoomManager()
-	room := rm.CreateRoom(c.ID)
+	if playerName == "" {
+		playerName = "Player 1"
+	}
+	room := rm.CreateRoom(c.ID, playerName)
 
 	c.SetRoomCode(room.Code)
 	c.Hub.JoinRoom(room.Code, c)
 
-	log.Printf("client %s created room %s", c.ID, room.Code)
+	log.Printf("client %s (%s) created room %s", c.ID, playerName, room.Code)
 
 	c.SendJSON(NewMessage(TypeRoomCreated, RoomCreatedPayload{
 		RoomCode: room.Code,
 	}))
 }
 
-func (c *Client) handleJoinRoom(code string) {
+func (c *Client) handleJoinRoom(code string, playerName string) {
 	if code == "" {
 		c.SendJSON(NewError("missing_code", "room code is required"))
 		return
 	}
 
 	rm := game.GetRoomManager()
-	room, err := rm.JoinRoom(code, c.ID)
+	if playerName == "" {
+		playerName = "Player 2"
+	}
+	room, err := rm.JoinRoom(code, c.ID, playerName)
 
 	if err != nil {
 		c.SendJSON(NewError("join_failed", err.Error()))
@@ -159,7 +165,7 @@ func (c *Client) handleJoinRoom(code string) {
 	c.SetRoomCode(code)
 	c.Hub.JoinRoom(code, c)
 
-	log.Printf("client %s joined room %s", c.ID, code)
+	log.Printf("client %s (%s) joined room %s", c.ID, playerName, code)
 
 	c.SendJSON(NewMessage(TypeRoomJoined, RoomJoinedPayload{
 		RoomCode: code,
@@ -172,6 +178,8 @@ func (c *Client) handleJoinRoom(code string) {
 			return NewMessage(TypeGameStart, GameStartPayload{
 				RoomCode:     code,
 				PlayerNumber: playerNum,
+				Player1Name:  room.Players[0].Name,
+				Player2Name:  room.Players[1].Name,
 			})
 		})
 	}
@@ -230,8 +238,8 @@ func (c *Client) handleMove(column int) {
 		if producer := events.GetProducer(); producer != nil {
 			producer.PublishGameCompleted(events.GameCompletedEvent{
 				RoomCode:        roomCode,
-				Player1Name:     room.Players[0].ID, // TODO: Use actual player names
-				Player2Name:     room.Players[1].ID,
+				Player1Name:     room.Players[0].Name,
+				Player2Name:     room.Players[1].Name,
 				Winner:          playerNum,
 				IsBotGame:       room.IsBotGame,
 				DurationSeconds: 0, // TODO: Track actual duration
@@ -252,8 +260,8 @@ func (c *Client) handleMove(column int) {
 		if producer := events.GetProducer(); producer != nil {
 			producer.PublishGameCompleted(events.GameCompletedEvent{
 				RoomCode:        roomCode,
-				Player1Name:     room.Players[0].ID,
-				Player2Name:     room.Players[1].ID,
+				Player1Name:     room.Players[0].Name,
+				Player2Name:     room.Players[1].Name,
 				Winner:          0,
 				IsBotGame:       room.IsBotGame,
 				DurationSeconds: 0,
@@ -391,14 +399,17 @@ func (c *Client) GetRoomCode() string {
 	return c.RoomCode
 }
 
-func (c *Client) handleCreateBotGame() {
+func (c *Client) handleCreateBotGame(playerName string) {
 	rm := game.GetRoomManager()
-	room := rm.CreateBotRoom(c.ID)
+	if playerName == "" {
+		playerName = "Player 1"
+	}
+	room := rm.CreateBotRoom(c.ID, playerName)
 
 	c.SetRoomCode(room.Code)
 	c.Hub.JoinRoom(room.Code, c)
 
-	log.Printf("client %s created bot game %s", c.ID, room.Code)
+	log.Printf("client %s (%s) created bot game %s", c.ID, playerName, room.Code)
 
 	// Send room created message
 	c.SendJSON(NewMessage(TypeRoomCreated, RoomCreatedPayload{
@@ -409,6 +420,8 @@ func (c *Client) handleCreateBotGame() {
 	c.SendJSON(NewMessage(TypeGameStart, GameStartPayload{
 		RoomCode:     room.Code,
 		PlayerNumber: 1,
+		Player1Name:  room.Players[0].Name,
+		Player2Name:  room.Players[1].Name,
 	}))
 }
 

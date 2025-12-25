@@ -63,12 +63,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   isSoundEnabled: true,
   rematchStatus: null,
   username: "",
+  opponentName: "",
 
   setAppScreen: (screen: AppScreen) => set({ appScreen: screen }),
 
   setRematchStatus: (status) => set({ rematchStatus: status }),
   setGameMode: (mode: GameMode) => set({ gameMode: mode }),
   setUsername: (name: string) => set({ username: name }),
+  setOpponentName: (name: string) => set({ opponentName: name }),
 
   toggleSound: () => {
     const newMuteState = !get().isSoundEnabled;

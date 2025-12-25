@@ -12,12 +12,13 @@ const Controls: React.FC = () => {
     isSoundEnabled,
     gameMode,
     username,
+    opponentName,
   } = useGameStore();
 
   // Get display name for player 1
   const player1Name = username || "P1";
-  // Get display name for player 2 (Bot in CPU mode, P2 otherwise)
-  const player2Name = gameMode === "cpu" ? "Bot" : "P2";
+  // Get display name for player 2 (use opponent name if available, otherwise Bot or P2)
+  const player2Name = opponentName || (gameMode === "cpu" ? "Bot" : "P2");
 
   return (
     <div className="absolute top-3 sm:top-4 left-0 right-0 px-3 sm:px-4 md:px-8 z-20 flex flex-wrap sm:flex-nowrap gap-3 items-center justify-between pointer-events-none">
@@ -46,8 +47,8 @@ const Controls: React.FC = () => {
             y: currentPlayer === 1 ? 0 : 5,
           }}
           className={`flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-3 border-black rounded-xl shadow-neo transition-colors duration-300 ${currentPlayer === 1
-              ? "bg-player1 text-white"
-              : "bg-slate-200 text-slate-500"
+            ? "bg-player1 text-white"
+            : "bg-slate-200 text-slate-500"
             }`}
         >
           <span className="font-black text-lg sm:text-xl md:text-2xl tracking-tighter drop-shadow-sm max-w-[100px] truncate">
@@ -87,8 +88,8 @@ const Controls: React.FC = () => {
             y: currentPlayer === 2 ? 0 : 5,
           }}
           className={`flex items-center justify-center px-4 md:px-6 py-2 md:py-3 border-3 border-black rounded-xl shadow-neo transition-colors duration-300 ${currentPlayer === 2
-              ? "bg-player2 text-black"
-              : "bg-slate-200 text-slate-500"
+            ? "bg-player2 text-black"
+            : "bg-slate-200 text-slate-500"
             }`}
         >
           <span className="font-black text-lg sm:text-xl md:text-2xl tracking-tighter drop-shadow-sm">

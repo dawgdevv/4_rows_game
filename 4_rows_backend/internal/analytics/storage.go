@@ -217,6 +217,64 @@ func (s *AnalyticsStorage) ProcessKafkaMessage(data []byte) error {
 	return s.SaveGameEvent(event)
 }
 
+// LeaderboardEntry represents a player's ranking
+type LeaderboardEntry struct {
+	Name    string  `json:"name"`
+	Wins    int     `json:"wins"`
+	Games   int     `json:"games"`
+	WinRate float64 `json:"win_rate"`
+}
+
+// GetLeaderboard returns top players ranked by wins
+func (s *AnalyticsStorage) GetLeaderboard(limit int) ([]LeaderboardEntry, error) {
+	// Aggregate wins from player perspective (player can be player1 or player2)
+	query := `
+	SELECT name, SUM(wins) as total_wins, SUM(games) as total_games
+	FROM (
+		-- Games where player was player1
+		SELECT 
+			player1_name as name,
+			CASE WHEN winner = 1 THEN 1 ELSE 0 END as wins,
+			1 as games
+		FROM game_events 
+		WHERE player1_name != '' AND player1_name != 'bot'
+		
+		UNION ALL
+		
+		-- Games where player was player2 (only non-bot games)
+		SELECT 
+			player2_name as name,
+			CASE WHEN winner = 2 THEN 1 ELSE 0 END as wins,
+			1 as games
+		FROM game_events 
+		WHERE player2_name != '' AND player2_name != 'bot' AND is_bot_game = 0
+	)
+	GROUP BY name
+	ORDER BY total_wins DESC, total_games DESC
+	LIMIT ?
+	`
+
+	rows, err := s.db.Query(query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var leaderboard []LeaderboardEntry
+	for rows.Next() {
+		var entry LeaderboardEntry
+		if err := rows.Scan(&entry.Name, &entry.Wins, &entry.Games); err != nil {
+			return nil, err
+		}
+		if entry.Games > 0 {
+			entry.WinRate = float64(entry.Wins) / float64(entry.Games)
+		}
+		leaderboard = append(leaderboard, entry)
+	}
+
+	return leaderboard, rows.Err()
+}
+
 // Close closes the database connection
 func (s *AnalyticsStorage) Close() error {
 	return s.db.Close()

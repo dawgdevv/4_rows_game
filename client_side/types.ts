@@ -34,6 +34,7 @@ export interface GameState {
   isSoundEnabled: boolean;
   rematchStatus: "waiting_for_opponent" | "opponent_requested" | null;
   username: string;
+  opponentName: string;
 
   // Actions
   startDrop: (colIndex: number) => void;
@@ -45,6 +46,7 @@ export interface GameState {
   toggleSound: () => void;
   quitGame: () => void;
   setUsername: (name: string) => void;
+  setOpponentName: (name: string) => void;
 
   hoverColumn: number | null;
   setHoverColumn: (colIndex: number | null) => void;

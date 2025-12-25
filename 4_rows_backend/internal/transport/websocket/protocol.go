@@ -23,9 +23,10 @@ const (
 )
 
 type IncomingMessage struct {
-	Type     MessageType `json:"type"`
-	RoomCode string      `json:"room_code,omitempty"`
-	Column   int         `json:"column,omitempty"`
+	Type       MessageType `json:"type"`
+	RoomCode   string      `json:"room_code,omitempty"`
+	Column     int         `json:"column,omitempty"`
+	PlayerName string      `json:"player_name,omitempty"`
 }
 
 type OutgoingMessage struct {
@@ -45,6 +46,8 @@ type RoomJoinedPayload struct {
 type GameStartPayload struct {
 	RoomCode     string `json:"room_code"`
 	PlayerNumber int    `json:"player_number"`
+	Player1Name  string `json:"player1_name"`
+	Player2Name  string `json:"player2_name"`
 }
 
 type MoveResultPayload struct {

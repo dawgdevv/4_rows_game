@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// Initialize Kafka producer (optional - falls back gracefully if Kafka not available)
-	kafkaBrokers := getEnv("KAFKA_BROKERS", "localhost:9092")
+	kafkaBrokers := getEnv("KAFKA_BROKERS", "127.0.0.1:9094")
 	kafkaTopic := getEnv("KAFKA_TOPIC", "game-events")
 
 	producer := events.NewKafkaProducer([]string{kafkaBrokers}, kafkaTopic)

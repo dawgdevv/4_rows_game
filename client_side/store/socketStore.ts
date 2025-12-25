@@ -76,7 +76,14 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                         gameStore.setAppScreen('game');
                         gameStore.resetGame();
                         set({ playerNumber: payload.player_number });
+
+                        // Set opponent name based on player number
+                        const myPlayerNum = payload.player_number;
+                        const opponentName = myPlayerNum === 1 ? payload.player2_name : payload.player1_name;
+                        gameStore.setOpponentName(opponentName || "");
+
                         console.log("Game started! You are player:", payload.player_number);
+                        console.log("Opponent name:", opponentName);
                         break;
                     case "move_result":
                         // The server confirms the move was valid and gives us the row/col
@@ -88,8 +95,8 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
                         // if we want to rely purely on server state.
 
                         // Ideally, we check if it's OUR move or THEIR move.
-                        const myPlayerNum = get().playerNumber;
-                        if (payload.player_number !== myPlayerNum) {
+                        const currentPlayerNum = get().playerNumber;
+                        if (payload.player_number !== currentPlayerNum) {
                             gameStore.triggerRemoteMove(payload.column, payload.row, payload.player_number as 1 | 2);
                         } else {
                             // It was our move. The store might have already optimistically updated? 
@@ -147,24 +154,37 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
     createRoom: () => {
         const { socket } = get();
+        const gameStore = useGameStore.getState();
         if (socket && socket.readyState === WebSocket.OPEN) {
             set({ isBotGame: false });
-            socket.send(JSON.stringify({ type: "create_room" }));
+            socket.send(JSON.stringify({
+                type: "create_room",
+                player_name: gameStore.username || "Player 1"
+            }));
         }
     },
 
     createBotGame: () => {
         const { socket } = get();
+        const gameStore = useGameStore.getState();
         if (socket && socket.readyState === WebSocket.OPEN) {
             set({ isBotGame: true });
-            socket.send(JSON.stringify({ type: "create_bot_game" }));
+            socket.send(JSON.stringify({
+                type: "create_bot_game",
+                player_name: gameStore.username || "Player 1"
+            }));
         }
     },
 
     joinRoom: (roomCode: string) => {
         const { socket } = get();
+        const gameStore = useGameStore.getState();
         if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "join_room", room_code: roomCode }));
+            socket.send(JSON.stringify({
+                type: "join_room",
+                room_code: roomCode,
+                player_name: gameStore.username || "Player 2"
+            }));
         }
     },
 

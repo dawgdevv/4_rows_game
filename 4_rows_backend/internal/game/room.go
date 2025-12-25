@@ -31,6 +31,7 @@ type Room struct {
 
 type PlayerSlot struct {
 	ID        string
+	Name      string
 	Connected bool
 }
 
@@ -77,7 +78,9 @@ func (rm *RoomManager) saveRoom(room *Room) {
 	data := &storage.RoomData{
 		Code:        room.Code,
 		Player1ID:   room.Players[0].ID,
+		Player1Name: room.Players[0].Name,
 		Player2ID:   room.Players[1].ID,
+		Player2Name: room.Players[1].Name,
 		Board:       room.Board.Grid,
 		CurrentTurn: room.CurrentTurn,
 		GameStarted: room.GameStarted,
@@ -106,7 +109,7 @@ func (rm *RoomManager) SaveRoomState(room *Room) {
 	rm.updateActivity(room.Code)
 }
 
-func (rm *RoomManager) CreateRoom(playerID string) *Room {
+func (rm *RoomManager) CreateRoom(playerID string, playerName string) *Room {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -120,14 +123,14 @@ func (rm *RoomManager) CreateRoom(playerID string) *Room {
 		Code:        code,
 		CurrentTurn: 1,
 	}
-	room.Players[0] = PlayerSlot{ID: playerID, Connected: true}
+	room.Players[0] = PlayerSlot{ID: playerID, Name: playerName, Connected: true}
 
 	rm.rooms[code] = room
 	rm.saveRoom(room)
 	return room
 }
 
-func (rm *RoomManager) CreateBotRoom(playerID string) *Room {
+func (rm *RoomManager) CreateBotRoom(playerID string, playerName string) *Room {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -143,15 +146,15 @@ func (rm *RoomManager) CreateBotRoom(playerID string) *Room {
 		IsBotGame:   true,
 		GameStarted: true, // Bot game starts immediately
 	}
-	room.Players[0] = PlayerSlot{ID: playerID, Connected: true}
-	room.Players[1] = PlayerSlot{ID: "bot", Connected: true}
+	room.Players[0] = PlayerSlot{ID: playerID, Name: playerName, Connected: true}
+	room.Players[1] = PlayerSlot{ID: "bot", Name: "Bot", Connected: true}
 
 	rm.rooms[code] = room
 	rm.saveRoom(room)
 	return room
 }
 
-func (rm *RoomManager) JoinRoom(code string, playerID string) (*Room, error) {
+func (rm *RoomManager) JoinRoom(code string, playerID string, playerName string) (*Room, error) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -164,7 +167,7 @@ func (rm *RoomManager) JoinRoom(code string, playerID string) (*Room, error) {
 		return nil, ErrRoomFull
 	}
 
-	room.Players[1] = PlayerSlot{ID: playerID, Connected: true}
+	room.Players[1] = PlayerSlot{ID: playerID, Name: playerName, Connected: true}
 	room.GameStarted = true
 
 	rm.saveRoom(room)
